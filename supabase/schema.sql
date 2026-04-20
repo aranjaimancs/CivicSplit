@@ -11,11 +11,14 @@ create extension if not exists "pgcrypto";
 -- ============================================================
 
 create table if not exists groups (
-  id          uuid primary key default gen_random_uuid(),
-  name        text not null,
-  join_code   text not null unique,
-  week_count  int  not null default 8,
-  created_at  timestamptz not null default now()
+  id              uuid primary key default gen_random_uuid(),
+  name            text not null,
+  join_code       text not null unique,
+  week_count      int  not null default 8,
+  stipend_amount  numeric(10,2) not null default 1200,
+  start_date      date,
+  end_date        date,
+  created_at      timestamptz not null default now()
 );
 
 create table if not exists members (
@@ -34,6 +37,7 @@ create table if not exists receipts (
   group_id    uuid not null references groups(id) on delete cascade,
   paid_by     uuid not null references members(id) on delete cascade,
   store_name  text not null,
+  category    text not null default 'Other',
   date        date not null default current_date,
   total       numeric(10,2) not null default 0,
   created_at  timestamptz not null default now()
@@ -99,6 +103,12 @@ create policy "public read groups"
 
 create policy "public insert groups"
   on groups for insert with check (true);
+
+create policy "public update groups"
+  on groups for update using (true);
+
+create policy "public delete groups"
+  on groups for delete using (true);
 
 create policy "public read members"
   on members for select using (true);

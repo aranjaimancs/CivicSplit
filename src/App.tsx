@@ -6,13 +6,16 @@ import { AddReceipt } from './pages/AddReceipt'
 import { ReceiptDetail } from './pages/ReceiptDetail'
 import { SettleUp } from './pages/SettleUp'
 import { History } from './pages/History'
+import { AdminDashboard } from './pages/AdminDashboard'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 export default function App() {
   return (
-    <>
+    <ErrorBoundary>
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/group/:joinCode" element={<GroupHome />} />
           <Route path="/group/:joinCode/add" element={<AddReceipt />} />
           <Route path="/group/:joinCode/receipt/:id" element={<ReceiptDetail />} />
@@ -34,6 +37,6 @@ export default function App() {
           },
         }}
       />
-    </>
+    </ErrorBoundary>
   )
 }

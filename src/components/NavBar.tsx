@@ -35,10 +35,10 @@ export function NavBar({ joinCode }: Props) {
                 >
                   <span
                     className={clsx(
-                      'absolute -top-5 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-fab transition-transform',
+                      'absolute -top-6 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-fab transition-all duration-200',
                       isActive
-                        ? 'scale-105 bg-primary-600 ring-4 ring-white'
-                        : 'bg-primary-600 hover:bg-primary-700 active:scale-95'
+                        ? 'scale-105 bg-gradient-to-b from-primary-500 to-primary-700 ring-4 ring-white'
+                        : 'bg-gradient-to-b from-primary-500 to-primary-700 hover:brightness-110 active:scale-95'
                     )}
                   >
                     <item.icon className="h-7 w-7" strokeWidth={2.25} />
@@ -64,7 +64,12 @@ export function NavBar({ joinCode }: Props) {
                   isActive ? 'text-primary-600' : 'text-slate-400 hover:text-slate-600'
                 )}
               >
-                <item.icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.25 : 1.75} />
+                <span className="relative">
+                  <item.icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.25 : 1.75} />
+                  {isActive && (
+                    <span className="absolute -bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary-600" />
+                  )}
+                </span>
                 <span className="text-[11px] font-semibold">{item.label}</span>
               </Link>
             )

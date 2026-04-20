@@ -5,6 +5,9 @@ export interface Group {
   name: string
   join_code: string
   week_count: number
+  stipend_amount: number
+  start_date: string | null
+  end_date: string | null
   created_at: string
 }
 
@@ -18,11 +21,23 @@ export interface Member {
   created_at: string
 }
 
+export const RECEIPT_CATEGORIES = [
+  'Groceries',
+  'Dining',
+  'Transportation',
+  'Household',
+  'Activities',
+  'Other',
+] as const
+
+export type ReceiptCategory = typeof RECEIPT_CATEGORIES[number]
+
 export interface Receipt {
   id: string
   group_id: string
   paid_by: string
   store_name: string
+  category: ReceiptCategory
   date: string
   total: number
   created_at: string
@@ -78,10 +93,11 @@ export interface DraftLineItem {
   id: string
   name: string
   price: string
-  split_type: SplitType
-  custom_splits: Record<string, string>
-  aiReason?: string      // set when AI scanned the receipt
-  aiSuggested?: SplitType  // the AI's original suggestion (so we can show "changed" state)
+  /** Member IDs who split this item equally. Defaults to all members (= shared). */
+  assigned_member_ids: string[]
+  aiReason?: string
+  /** true when OCR originally suggested all members; false when it suggested personal */
+  aiSuggestedAll?: boolean
 }
 
 export interface WeekSummary {

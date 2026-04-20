@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Group, Member, Receipt } from '../types'
+import type { Group, Member, Receipt, Settlement } from '../types'
 
 // ============================================================
 // Session store — persisted to localStorage
@@ -51,12 +51,15 @@ interface GroupState {
   group: Group | null
   members: Member[]
   receipts: Receipt[]
+  settlements: Settlement[]
   loading: boolean
   error: string | null
 
   setGroup: (group: Group) => void
   setMembers: (members: Member[]) => void
   setReceipts: (receipts: Receipt[]) => void
+  setSettlements: (settlements: Settlement[]) => void
+  addSettlement: (settlement: Settlement) => void
   addReceipt: (receipt: Receipt) => void
   updateReceipt: (receipt: Receipt) => void
   removeReceipt: (id: string) => void
@@ -69,6 +72,7 @@ const defaultGroupState = {
   group: null,
   members: [],
   receipts: [],
+  settlements: [],
   loading: false,
   error: null,
 }
@@ -79,6 +83,9 @@ export const useGroupStore = create<GroupState>()((set) => ({
   setGroup: (group) => set({ group }),
   setMembers: (members) => set({ members }),
   setReceipts: (receipts) => set({ receipts }),
+  setSettlements: (settlements) => set({ settlements }),
+  addSettlement: (settlement) =>
+    set((s) => ({ settlements: [...s.settlements, settlement] })),
 
   addReceipt: (receipt) =>
     set((s) => {

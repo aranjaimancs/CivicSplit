@@ -23,7 +23,7 @@ export function ReceiptCard({ receipt, members, joinCode }: Props) {
 
   return (
     <Link to={`/group/${joinCode}/receipt/${receipt.id}`} className="block">
-      <div className="card flex items-center gap-3.5 p-3.5 transition-all active:scale-[0.99] hover:border-slate-300/90 hover:shadow-card-md">
+      <div className="card flex items-center gap-3.5 p-4 transition-all active:scale-[0.99] hover:shadow-card-lift">
         <div className="relative shrink-0">
           <div
             className="flex h-12 w-12 items-center justify-center rounded-2xl text-lg font-bold text-white shadow-inner"

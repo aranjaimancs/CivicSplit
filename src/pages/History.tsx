@@ -16,7 +16,7 @@ export function History() {
 
   const weeks = useMemo<WeekSummary[]>(() => {
     if (!group) return []
-    const groupStart = new Date(group.created_at)
+    const groupStart = new Date(group.start_date ?? group.created_at)
 
     return Array.from({ length: group.week_count }, (_, w) => {
       const startDate = addWeeks(groupStart, w)
@@ -34,7 +34,7 @@ export function History() {
   const totalGroupSpend = receipts.reduce((s, r) => s + Number(r.total), 0)
 
   return (
-    <div className="min-h-screen bg-app-bg pb-36">
+    <div className="min-h-screen bg-app-bg pb-36 animate-fade-in">
       <header className="page-header">
         <h1 className="text-xl font-bold text-slate-900">History</h1>
         <p className="mt-0.5 text-sm text-slate-500">

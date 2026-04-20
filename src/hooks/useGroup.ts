@@ -1,14 +1,14 @@
 import { useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useGroupStore } from '../store'
-import type { Group, Member, Receipt } from '../types'
+import type { Group, Member, Receipt, Settlement } from '../types'
 
 /**
  * Loads group data (group row, members, receipts with line items)
  * for a given join code. Populates the group store.
  */
 export function useGroup(joinCode: string | undefined) {
-  const { setGroup, setMembers, setReceipts, setLoading, setError, reset } = useGroupStore()
+  const { setGroup, setMembers, setReceipts, setSettlements, setLoading, setError, reset } = useGroupStore()
 
   const load = useCallback(async () => {
     if (!joinCode) return
@@ -42,6 +42,14 @@ export function useGroup(joinCode: string | undefined) {
 
       // 3. Fetch receipts with line items and splits
       await loadReceipts(groupData.id)
+
+      // 4. Fetch settled settlements
+      const { data: settlementsData } = await supabase
+        .from('settlements')
+        .select('*')
+        .eq('group_id', groupData.id)
+        .eq('is_settled', true)
+      setSettlements((settlementsData ?? []) as Settlement[])
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load group')
     } finally {

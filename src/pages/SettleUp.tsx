@@ -28,14 +28,22 @@ export function SettleUp() {
     const txKey = `${tx.from.id}->${tx.to.id}`
     setLoadingId(txKey)
     try {
-      await supabase.from('settlements').insert({
-        group_id: group!.id,
-        from_member: tx.from.id,
-        to_member: tx.to.id,
-        amount: tx.amount,
-        is_settled: true,
-        settled_at: new Date().toISOString(),
-      })
+      const { data, error } = await supabase
+        .from('settlements')
+        .insert({
+          group_id: group!.id,
+          from_member: tx.from.id,
+          to_member: tx.to.id,
+          amount: tx.amount,
+          is_settled: true,
+          settled_at: new Date().toISOString(),
+        })
+        .select()
+        .single()
+      if (error) throw error
+
+      // Push into the store so balances recalculate immediately
+      useGroupStore.getState().addSettlement(data)
       setSettledIds((prev) => new Set([...prev, txKey]))
       toast.success(`Marked ${fmt(tx.amount)} as paid ✓`)
     } catch {
@@ -68,7 +76,7 @@ export function SettleUp() {
   const allSettled = transactions.length === 0
 
   return (
-    <div className="min-h-screen bg-app-bg pb-36">
+    <div className="min-h-screen bg-app-bg pb-36 animate-fade-in">
       <header className="page-header">
         <h1 className="text-xl font-bold text-slate-900">Settle up</h1>
         {group && <p className="mt-0.5 text-sm text-slate-500">{group.name}</p>}
@@ -78,7 +86,7 @@ export function SettleUp() {
         {myBalance && (
           <div
             className={[
-              'rounded-2xl border p-5 shadow-card-md',
+              'rounded-2xl border p-5 shadow-card-lift',
               myBalance.net > 0.005
                 ? 'border-emerald-200/80 bg-gradient-to-br from-emerald-500 to-teal-600 text-white'
                 : myBalance.net < -0.005
@@ -117,7 +125,7 @@ export function SettleUp() {
         )}
 
         {allSettled ? (
-          <div className="card flex flex-col items-center px-6 py-12 text-center shadow-card-md">
+          <div className="card flex flex-col items-center px-6 py-12 text-center shadow-card-lift">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-3xl">✓</div>
             <p className="text-lg font-bold text-slate-900">All settled</p>
             <p className="mt-1 text-sm text-slate-500">No payments needed right now.</p>

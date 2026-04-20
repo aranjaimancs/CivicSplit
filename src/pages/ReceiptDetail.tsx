@@ -61,7 +61,7 @@ export function ReceiptDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-app-bg pb-36">
+    <div className="min-h-screen bg-app-bg pb-36 animate-fade-in">
       <header className="page-header">
         <div className="flex items-center gap-3">
           <button type="button" onClick={() => navigate(-1)} className="icon-btn" aria-label="Back">

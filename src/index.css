@@ -10,7 +10,8 @@
   }
 
   body {
-    background-color: #E8EBF0;
+    /* Outer gutter color on desktop */
+    background-color: #D8D6F0;
     overscroll-behavior: none;
     @apply text-slate-900 antialiased;
   }
@@ -20,18 +21,13 @@
     margin: 0 auto;
     min-height: 100svh;
     position: relative;
-    background-color: #F0F2F5;
+    background-color: #F3F2FF; /* app.bg */
   }
 
   /* Hide number spinners */
   input[type='number']::-webkit-inner-spin-button,
-  input[type='number']::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-  input[type='number'] {
-    -moz-appearance: textfield;
-  }
+  input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type='number'] { -moz-appearance: textfield; }
 
   /* Hide scrollbars on scroll containers */
   .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -39,76 +35,95 @@
 }
 
 @layer components {
+  /* ── Inputs ─────────────────────────────── */
   .input-filled {
-    @apply w-full rounded-xl border border-slate-200/90 bg-white px-3.5 py-3 text-[15px] text-slate-900
+    @apply w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-[15px] text-slate-900
            placeholder:text-slate-400 shadow-sm
-           focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-400/20
-           transition-[border-color,box-shadow];
+           focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-300/30
+           transition-[border-color,box-shadow] duration-150;
   }
 
+  /* ── Cards ──────────────────────────────── */
   .card {
-    @apply rounded-2xl border border-slate-200/80 bg-white shadow-card;
+    @apply rounded-2xl bg-white shadow-card ring-1 ring-slate-900/5;
   }
 
+  /* ── Buttons ────────────────────────────── */
   .btn-primary {
-    @apply w-full rounded-xl bg-primary-600 py-3.5 text-[15px] font-semibold text-white
-           shadow-md shadow-primary-600/25
-           transition-all hover:bg-primary-700
-           active:scale-[0.99] disabled:opacity-50 disabled:active:scale-100;
+    @apply w-full rounded-2xl bg-primary-600 py-4 text-[15px] font-bold text-white
+           shadow-md shadow-primary-600/25 tracking-tight
+           transition-all duration-150 hover:bg-primary-700
+           active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100;
   }
 
   .btn-ghost {
     @apply w-full rounded-xl border border-white/25 bg-white/10 py-3.5 text-[15px] font-semibold text-white
-           backdrop-blur-sm transition-all hover:bg-white/15
-           active:scale-[0.99];
+           backdrop-blur-sm transition-all duration-150 hover:bg-white/20
+           active:scale-[0.98];
   }
 
+  /* ── Page headers ───────────────────────── */
   .page-header {
-    @apply sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 px-4 pb-3 backdrop-blur-md;
+    @apply sticky top-0 z-30 border-b border-slate-200/60 bg-white/90 px-4 pb-3 backdrop-blur-xl;
     padding-top: max(2.75rem, calc(env(safe-area-inset-top, 0px) + 0.75rem));
   }
 
+  /* ── Icon buttons ───────────────────────── */
   .icon-btn {
-    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-600 shadow-sm
-           transition-colors hover:border-slate-300 hover:bg-slate-50 active:scale-[0.97];
+    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white
+           text-slate-500 shadow-sm transition-all duration-150
+           hover:border-slate-300 hover:bg-slate-50 active:scale-[0.95];
+  }
+
+  /* ── Skeleton shimmer ───────────────────── */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      rgba(79,70,187,0.06) 25%,
+      rgba(79,70,187,0.12) 50%,
+      rgba(79,70,187,0.06) 75%
+    );
+    background-size: 200% 100%;
+    @apply animate-shimmer rounded-xl;
   }
 }
 
 @layer utilities {
-  .safe-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom, 0px), 1rem);
-  }
-
   .amount {
     font-variant-numeric: tabular-nums;
   }
 
+  /* Safe-area bottom padding */
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
+  }
+
+  /* Desktop: soft shadow to define the phone shape */
   @media (min-width: 480px) {
     #root {
-      box-shadow:
-        0 0 0 1px rgba(15, 23, 42, 0.06),
-        0 24px 64px rgba(15, 23, 42, 0.12);
+      box-shadow: 0 0 0 1px rgba(79,70,187,0.10), 0 32px 80px rgba(79,70,187,0.16);
     }
   }
 }
 
-@keyframes slide-up {
-  from { transform: translateY(16px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
-}
+/* ── Legacy animation helpers ─────────────── */
+/* Keep these for components that still use the plain class names */
+.animate-slide-up    { animation: slide-up 0.28s cubic-bezier(0.34,1.2,0.64,1) both; }
+.animate-slide-up-sm { animation: slide-up-sm 0.22s ease both; }
+.animate-fade-in     { animation: fade-in 0.22s ease both; }
 
-@keyframes fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
+/* Dot-pulse used in the scanning overlay */
+.dot-pulse > span { animation: pulse-dot 1.4s ease-in-out infinite; }
+.dot-pulse > span:nth-child(2) { animation-delay: 0.2s; }
+.dot-pulse > span:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes pulse-dot {
-  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-  40%           { transform: scale(1);   opacity: 1;   }
+  0%, 80%, 100% { transform: scale(0.55); opacity: 0.35; }
+  40%           { transform: scale(1);    opacity: 1;    }
 }
 
-.animate-slide-up  { animation: slide-up 0.3s ease both; }
-.animate-fade-in   { animation: fade-in  0.25s ease both; }
-.dot-pulse span    { animation: pulse-dot 1.4s ease-in-out infinite; }
-.dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
-.dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+/* These are now in tailwind keyframes config, kept here as fallback */
+@keyframes fade-in    { from { opacity: 0 }              to { opacity: 1 } }
+@keyframes slide-up   { from { transform: translateY(20px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+@keyframes slide-up-sm{ from { transform: translateY(8px);  opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+@keyframes shimmer    { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }

@@ -8,10 +8,16 @@ import { LineItemRow } from '../components/LineItemRow'
 import { NavBar } from '../components/NavBar'
 import { isOcrEnabled, parseReceiptImage } from '../lib/ocr'
 import { round2, fmt } from '../lib/calculations'
-import type { DraftLineItem } from '../types'
+import { RECEIPT_CATEGORIES } from '../types'
+import type { DraftLineItem, ReceiptCategory } from '../types'
 
-function newItem(): DraftLineItem {
-  return { id: crypto.randomUUID(), name: '', price: '', split_type: 'shared', custom_splits: {} }
+function newItem(memberIds: string[]): DraftLineItem {
+  return {
+    id: crypto.randomUUID(),
+    name: '',
+    price: '',
+    assigned_member_ids: [...memberIds],
+  }
 }
 
 export function AddReceipt() {
@@ -21,24 +27,19 @@ export function AddReceipt() {
   const { getMemberId } = useSessionStore()
   const currentMemberId = getMemberId(joinCode ?? '')
 
+  const allMemberIds = members.map((m) => m.id)
+
   const [storeName, setStoreName] = useState('')
+  const [category, setCategory] = useState<ReceiptCategory>('Groceries')
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
   const [paidBy, setPaidBy] = useState(currentMemberId ?? '')
-  const [items, setItems] = useState<DraftLineItem[]>([newItem()])
+  const [items, setItems] = useState<DraftLineItem[]>([newItem(allMemberIds)])
   const [saving, setSaving] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [aiScanned, setAiScanned] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const sharedTotal = items
-    .filter((i) => i.split_type === 'shared')
-    .reduce((s, i) => s + (parseFloat(i.price) || 0), 0)
-  const shareEach = members.length > 0 ? sharedTotal / members.length : 0
-  const grandTotal = items.reduce((s, i) => {
-    if (i.split_type === 'custom')
-      return s + Object.values(i.custom_splits).reduce((a, v) => a + (parseFloat(v) || 0), 0)
-    return s + (parseFloat(i.price) || 0)
-  }, 0)
+  const grandTotal = items.reduce((s, i) => s + (parseFloat(i.price) || 0), 0)
 
   function updateItem(index: number, updated: DraftLineItem) {
     setItems((prev) => prev.map((item, i) => (i === index ? updated : item)))
@@ -57,10 +58,13 @@ export function AddReceipt() {
           id: crypto.randomUUID(),
           name: item.name,
           price: item.price,
-          split_type: item.split_type,
-          custom_splits: {},
+          // personal → assign to payer only; shared → everyone
+          assigned_member_ids:
+            item.split_type === 'personal' && paidBy
+              ? [paidBy]
+              : [...allMemberIds],
           aiReason: item.aiReason,
-          aiSuggested: item.split_type,
+          aiSuggestedAll: item.split_type !== 'personal',
         }))
       )
       setAiScanned(true)
@@ -77,7 +81,9 @@ export function AddReceipt() {
     e.preventDefault()
     if (!group || !paidBy) return
 
-    const validItems = items.filter((i) => i.name.trim() && parseFloat(i.price) > 0)
+    const validItems = items.filter(
+      (i) => i.name.trim() && parseFloat(i.price) > 0 && i.assigned_member_ids.length > 0
+    )
     if (validItems.length === 0) {
       toast.error('Add at least one item with a name and price')
       return
@@ -85,34 +91,61 @@ export function AddReceipt() {
 
     setSaving(true)
     try {
-      const total = round2(
-        validItems.reduce((s, i) => {
-          if (i.split_type === 'custom')
-            return s + Object.values(i.custom_splits).reduce((a, v) => a + (parseFloat(v) || 0), 0)
-          return s + (parseFloat(i.price) || 0)
-        }, 0)
-      )
+      const total = round2(validItems.reduce((s, i) => s + (parseFloat(i.price) || 0), 0))
 
       const { data: receipt, error: rErr } = await supabase
         .from('receipts')
-        .insert({ group_id: group.id, paid_by: paidBy, store_name: storeName.trim() || 'Store', date, total })
-        .select().single()
+        .insert({
+          group_id: group.id,
+          paid_by: paidBy,
+          store_name: storeName.trim() || 'Store',
+          category,
+          date,
+          total,
+        })
+        .select()
+        .single()
       if (rErr) throw rErr
+
+      // Map each item to shared vs custom based on who's assigned
+      const resolvedItems = validItems.map((item) => {
+        const isAllMembers =
+          item.assigned_member_ids.length === members.length &&
+          members.every((m) => item.assigned_member_ids.includes(m.id))
+        return { ...item, split_type: isAllMembers ? 'shared' : 'custom' } as const
+      })
 
       const { data: lineItems, error: liErr } = await supabase
         .from('line_items')
-        .insert(validItems.map((i) => ({ receipt_id: receipt.id, name: i.name.trim(), price: parseFloat(i.price), split_type: i.split_type })))
+        .insert(
+          resolvedItems.map((i) => ({
+            receipt_id: receipt.id,
+            name: i.name.trim(),
+            price: parseFloat(i.price),
+            split_type: i.split_type,
+          }))
+        )
         .select()
       if (liErr) throw liErr
 
-      const splitInserts = validItems.flatMap((item, idx) => {
+      // For custom splits: divide price equally among assigned members
+      const splitInserts = resolvedItems.flatMap((item, idx) => {
         if (item.split_type !== 'custom') return []
         const li = lineItems[idx]
         if (!li) return []
-        return Object.entries(item.custom_splits)
-          .filter(([, amt]) => parseFloat(amt) > 0)
-          .map(([memberId, amt]) => ({ line_item_id: li.id, member_id: memberId, amount: parseFloat(amt) }))
+
+        const price = parseFloat(item.price)
+        const count = item.assigned_member_ids.length
+        const base = round2(Math.floor((price * 100) / count) / 100)
+        const remainder = round2(price - base * count)
+
+        return item.assigned_member_ids.map((memberId, memberIdx) => ({
+          line_item_id: li.id,
+          member_id: memberId,
+          amount: memberIdx === 0 ? round2(base + remainder) : base,
+        }))
       })
+
       if (splitInserts.length > 0) {
         const { error: sErr } = await supabase.from('line_item_splits').insert(splitInserts)
         if (sErr) throw sErr
@@ -130,7 +163,7 @@ export function AddReceipt() {
   const ocrEnabled = isOcrEnabled()
 
   return (
-    <div className="min-h-screen bg-app-bg pb-36">
+    <div className="min-h-screen bg-app-bg pb-36 animate-fade-in">
       {scanning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-6 backdrop-blur-sm">
           <div className="w-full max-w-sm space-y-4 rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-2xl animate-slide-up">
@@ -183,24 +216,46 @@ export function AddReceipt() {
             <span className="text-lg text-primary-600">✦</span>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-primary-900">Items classified</p>
-              <p className="mt-0.5 text-xs text-primary-700/90">Tap a badge to switch shared ↔ personal.</p>
+              <p className="mt-0.5 text-xs text-primary-700/90">
+                Tap avatars to change who splits each item.
+              </p>
             </div>
-            <button type="button" onClick={() => setAiScanned(false)} className="shrink-0 text-slate-400 hover:text-slate-600" aria-label="Dismiss">
+            <button
+              type="button"
+              onClick={() => setAiScanned(false)}
+              className="shrink-0 text-slate-400 hover:text-slate-600"
+              aria-label="Dismiss"
+            >
               ×
             </button>
           </div>
         )}
 
+        {/* Receipt metadata */}
         <div className="card space-y-3 p-4">
-          <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Store</label>
-            <input
-              className="input-filled"
-              placeholder="Target, Trader Joe's…"
-              value={storeName}
-              onChange={(e) => setStoreName(e.target.value)}
-              maxLength={80}
-            />
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Store</label>
+              <input
+                className="input-filled"
+                placeholder="Target, Trader Joe's…"
+                value={storeName}
+                onChange={(e) => setStoreName(e.target.value)}
+                maxLength={80}
+              />
+            </div>
+            <div className="flex-1">
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Category</label>
+              <select
+                className="input-filled pr-8"
+                value={category}
+                onChange={(e) => setCategory(e.target.value as ReceiptCategory)}
+              >
+                {RECEIPT_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex gap-3">
             <div className="flex-1">
@@ -221,19 +276,7 @@ export function AddReceipt() {
           </div>
         </div>
 
-        {sharedTotal > 0 && (
-          <div className="flex items-center justify-between rounded-2xl border border-slate-200/90 bg-white px-4 py-3 shadow-sm">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Shared total</p>
-              <p className="amount text-lg font-bold text-slate-900">{fmt(sharedTotal)}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Per person</p>
-              <p className="amount text-lg font-bold text-slate-900">{fmt(shareEach)}</p>
-            </div>
-          </div>
-        )}
-
+        {/* Line items */}
         <div className="space-y-2">
           <div className="flex items-center justify-between px-0.5">
             <label className="text-xs font-bold uppercase tracking-wide text-slate-500">Line items</label>
@@ -245,7 +288,6 @@ export function AddReceipt() {
               key={item.id}
               item={item}
               members={members}
-              memberCount={members.length}
               onChange={(updated) => updateItem(i, updated)}
               onRemove={() => setItems((prev) => prev.filter((_, j) => j !== i))}
             />
@@ -253,7 +295,7 @@ export function AddReceipt() {
 
           <button
             type="button"
-            onClick={() => setItems((prev) => [...prev, newItem()])}
+            onClick={() => setItems((prev) => [...prev, newItem(allMemberIds)])}
             className="w-full rounded-2xl border-2 border-dashed border-slate-300 bg-white py-3.5 text-sm font-semibold text-primary-600 transition-colors hover:border-primary-300 hover:bg-primary-50/50 active:scale-[0.99]"
           >
             + Add item
