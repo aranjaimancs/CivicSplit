@@ -7,11 +7,14 @@
     font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
+    height: 100%;
+    /* Outer gutter color shows on desktop around the phone column */
+    background-color: #D8D6F0;
   }
 
   body {
-    /* Outer gutter color on desktop */
-    background-color: #D8D6F0;
+    min-height: 100%;
+    min-height: 100dvh;
     overscroll-behavior: none;
     @apply text-slate-900 antialiased;
   }
@@ -19,7 +22,7 @@
   #root {
     max-width: 480px;
     margin: 0 auto;
-    min-height: 100svh;
+    min-height: 100dvh;
     position: relative;
     background-color: #F3F2FF; /* app.bg */
   }
@@ -98,10 +101,10 @@
     padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
   }
 
-  /* Desktop: soft shadow to define the phone shape */
-  @media (min-width: 480px) {
+  /* Desktop: soft shadow to lift the phone column off the lavender background */
+  @media (min-width: 481px) {
     #root {
-      box-shadow: 0 0 0 1px rgba(79,70,187,0.10), 0 32px 80px rgba(79,70,187,0.16);
+      box-shadow: 0 0 0 1px rgba(79,70,187,0.10), 0 32px 80px rgba(79,70,187,0.20);
     }
   }
 }
