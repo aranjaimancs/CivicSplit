@@ -7,7 +7,7 @@ import type { Group, Member, Receipt, Settlement } from '../types'
 // ============================================================
 
 interface SessionState {
-  /** Anonymous user ID (stable per browser) */
+  /** Anonymous user ID (stable per browser, replaced by auth UID when signed in) */
   userId: string
   /** Map from join_code → member_id for groups we've joined */
   memberships: Record<string, string>
@@ -15,6 +15,8 @@ interface SessionState {
   setMembership: (joinCode: string, memberId: string) => void
   getMemberId: (joinCode: string) => string | undefined
   clearMembership: (joinCode: string) => void
+  /** Bulk-set memberships from DB (called after auth sign-in) */
+  hydrateMemberships: (map: Record<string, string>) => void
 }
 
 function generateUserId(): string {
@@ -38,6 +40,8 @@ export const useSessionStore = create<SessionState>()(
           delete next[joinCode]
           return { memberships: next }
         }),
+
+      hydrateMemberships: (map) => set({ memberships: map }),
     }),
     { name: 'civicsplit-session' }
   )

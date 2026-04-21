@@ -3,11 +3,10 @@ import { Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { format, parseISO } from 'date-fns'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
+import { useIsAdmin } from '../hooks/useIsAdmin'
 import { RECEIPT_CATEGORIES } from '../types'
 import type { ReceiptCategory } from '../types'
-
-const ADMIN_KEY = import.meta.env.VITE_ADMIN_PASSCODE ?? 'civic2026'
-const STORAGE_KEY = 'civicsplit_admin'
 
 function generateJoinCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -68,32 +67,33 @@ interface AdminGroup {
 // ─── Root ──────────────────────────────────────────────────────────────────────
 
 export function AdminDashboard() {
-  const [authed, setAuthed] = useState(() => localStorage.getItem(STORAGE_KEY) === ADMIN_KEY)
+  const { user, loading: authLoading, signInWithGoogle, signOut } = useAuth()
+  const { isAdmin, loading: adminLoading } = useIsAdmin(user)
 
-  function handleLogout() {
-    localStorage.removeItem(STORAGE_KEY)
-    setAuthed(false)
+  if (authLoading || (user && adminLoading)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-slate-700" />
+      </div>
+    )
   }
 
-  if (!authed) return <AdminLogin onAuth={() => setAuthed(true)} />
-  return <AdminPanel onLogout={handleLogout} />
+  if (!user) return <AdminSignIn onGoogle={signInWithGoogle} />
+  if (!isAdmin) return <AdminDenied email={user.email ?? ''} onSignOut={signOut} />
+  return <AdminPanel onLogout={signOut} />
 }
 
-// ─── Login ─────────────────────────────────────────────────────────────────────
+// ─── Sign-in prompt ────────────────────────────────────────────────────────────
 
-function AdminLogin({ onAuth }: { onAuth: () => void }) {
-  const [value, setValue] = useState('')
-  const [error, setError] = useState(false)
+function AdminSignIn({ onGoogle }: { onGoogle: () => Promise<{ error: Error | null }> }) {
+  const [loading, setLoading] = useState(false)
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (value.trim() === ADMIN_KEY) {
-      localStorage.setItem(STORAGE_KEY, value.trim())
-      onAuth()
-    } else {
-      setError(true)
-      setValue('')
-      setTimeout(() => setError(false), 2200)
+  async function handleGoogle() {
+    setLoading(true)
+    const { error } = await onGoogle()
+    if (error) {
+      toast.error(error.message)
+      setLoading(false)
     }
   }
 
@@ -105,36 +105,54 @@ function AdminLogin({ onAuth }: { onAuth: () => void }) {
             🏛️
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">Admin access</h1>
-          <p className="mt-1.5 text-sm text-slate-500">Enter your passcode to manage cohorts</p>
+          <p className="mt-1.5 text-sm text-slate-500">Sign in with your Google account to continue</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="password"
-            className={[
-              'input-filled py-3.5 text-center font-mono text-base tracking-[0.3em]',
-              error ? 'border-rose-400 ring-2 ring-rose-300/30' : '',
-            ].join(' ')}
-            placeholder="••••••••"
-            value={value}
-            onChange={(e) => { setValue(e.target.value); setError(false) }}
-            autoFocus
-          />
-          {error && (
-            <p className="text-center text-sm font-semibold text-rose-600 animate-fade-in">
-              Incorrect passcode
-            </p>
-          )}
-          <button type="submit" className="btn-primary">
-            Sign in
-          </button>
-        </form>
+        <button
+          type="button"
+          onClick={handleGoogle}
+          disabled={loading}
+          className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-3.5 text-sm font-semibold text-slate-800 shadow-sm transition-all hover:bg-slate-50 active:scale-[0.98] disabled:opacity-50"
+        >
+          <GoogleIcon />
+          {loading ? 'Redirecting…' : 'Continue with Google'}
+        </button>
 
         <p className="mt-6 text-center text-xs text-slate-400">
           <Link to="/" className="underline decoration-slate-300 underline-offset-2 hover:text-slate-600">
             ← Back to app
           </Link>
         </p>
+      </div>
+    </div>
+  )
+}
+
+// ─── Access denied ─────────────────────────────────────────────────────────────
+
+function AdminDenied({ email, onSignOut }: { email: string; onSignOut: () => void }) {
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-6">
+      <div className="w-full max-w-sm animate-fade-in text-center">
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-50 text-3xl shadow-sm ring-1 ring-rose-200">
+          🚫
+        </div>
+        <h1 className="text-xl font-bold text-slate-900">Access denied</h1>
+        <p className="mt-2 text-sm text-slate-500">
+          <span className="font-semibold">{email}</span> is not authorized as an admin.
+        </p>
+        <div className="mt-6 flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={onSignOut}
+            className="btn-primary"
+          >
+            Sign out
+          </button>
+          <Link to="/" className="text-xs text-slate-400 underline underline-offset-2 hover:text-slate-600">
+            ← Back to app
+          </Link>
+        </div>
       </div>
     </div>
   )
@@ -954,6 +972,17 @@ function TrashIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
         d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
       />
+    </svg>
+  )
+}
+
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4" />
+      <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853" />
+      <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05" />
+      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335" />
     </svg>
   )
 }
