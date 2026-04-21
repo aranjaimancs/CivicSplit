@@ -56,8 +56,26 @@ export function Landing() {
         .single()
       if (mErr) throw mErr
 
-      setMembership(code, member.id)
-      toast.success(`Welcome to ${group.name}!`)
+      // After insert we're now a group member, so we can SELECT.
+      // Check if a previous account with the same name already exists
+      // (happens when someone clears their browser cache / uses a new device).
+      const { data: previousAccount } = await supabase
+        .from('members')
+        .select('*')
+        .eq('group_id', group.id)
+        .eq('display_name', displayName.trim())
+        .neq('id', member.id)
+        .maybeSingle()
+
+      if (previousAccount) {
+        // Restore the old member ID so the user sees their original balance.
+        // The newly-created member is an orphan the admin can delete later.
+        setMembership(code, previousAccount.id)
+        toast.success(`Session restored — welcome back, ${previousAccount.display_name}!`)
+      } else {
+        setMembership(code, member.id)
+        toast.success(`Welcome to ${group.name}!`)
+      }
       navigate(`/group/${code}`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to join cohort')

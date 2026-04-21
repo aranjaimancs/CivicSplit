@@ -16,10 +16,10 @@ export function NavBar({ joinCode }: Props) {
   const location = useLocation()
 
   return (
-    <nav className="fixed bottom-0 left-1/2 z-40 w-full max-w-[480px] -translate-x-1/2">
+    <nav className="fixed bottom-0 left-0 z-40 w-full">
       <div className="border-t border-slate-200/90 bg-white/95 shadow-nav backdrop-blur-md">
         <div
-          className="flex items-end justify-stretch px-1 pt-1"
+          className="mx-auto flex max-w-4xl items-end justify-stretch px-4 pt-1"
           style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
         >
           {NAV_ITEMS.map((item) => {

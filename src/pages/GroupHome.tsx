@@ -90,7 +90,7 @@ export function GroupHome() {
         <div className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
         <div className="pointer-events-none absolute bottom-0 left-0 h-40 w-40 rounded-full bg-black/10 blur-2xl" />
 
-        <div className="relative">
+        <div className="relative mx-auto max-w-4xl">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white/90 backdrop-blur-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
             Week {week} of {group.week_count}
@@ -147,7 +147,7 @@ export function GroupHome() {
         </div>
       </header>
 
-      <div className="-mt-6 space-y-6 px-4">
+      <div className="page-body -mt-6 space-y-6">
         <section className="card relative z-10 p-5 shadow-card-lift">
           <div className="mb-3.5 flex items-center justify-between">
             <h2 className="text-[11px] font-bold uppercase tracking-[0.09em] text-slate-400">Balances</h2>

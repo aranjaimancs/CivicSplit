@@ -43,7 +43,7 @@ export function History() {
         </p>
       </header>
 
-      <div className="space-y-3 px-4 pt-4">
+      <div className="page-body space-y-3 pt-4">
         {weeks.length === 0 && (
           <div className="card flex flex-col items-center px-6 py-12 text-center">
             <div className="mb-3 text-4xl">📅</div>

@@ -82,7 +82,7 @@ export function SettleUp() {
         {group && <p className="mt-0.5 text-sm text-slate-500">{group.name}</p>}
       </header>
 
-      <div className="space-y-4 px-4 pt-4">
+      <div className="page-body space-y-4 pt-4">
         {myBalance && (
           <div
             className={[

@@ -8,23 +8,21 @@
     -webkit-tap-highlight-color: transparent;
     scroll-behavior: smooth;
     height: 100%;
-    /* Outer gutter color shows on desktop around the phone column */
-    background-color: #D8D6F0;
+    background-color: #F3F2FF;
   }
 
   body {
     min-height: 100%;
     min-height: 100dvh;
     overscroll-behavior: none;
+    background-color: #F3F2FF;
     @apply text-slate-900 antialiased;
   }
 
   #root {
-    max-width: 480px;
-    margin: 0 auto;
     min-height: 100dvh;
     position: relative;
-    background-color: #F3F2FF; /* app.bg */
+    background-color: #F3F2FF;
   }
 
   /* Hide number spinners */
@@ -101,10 +99,13 @@
     padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
   }
 
-  /* Desktop: soft shadow to lift the phone column off the lavender background */
-  @media (min-width: 481px) {
-    #root {
-      box-shadow: 0 0 0 1px rgba(79,70,187,0.10), 0 32px 80px rgba(79,70,187,0.20);
+  /* Desktop content centering — applied to inner content wrappers, not root */
+  .page-body {
+    @apply mx-auto w-full max-w-4xl px-4;
+  }
+  @media (min-width: 768px) {
+    .page-body {
+      @apply px-8;
     }
   }
 }

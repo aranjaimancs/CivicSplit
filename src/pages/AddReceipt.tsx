@@ -201,7 +201,7 @@ export function AddReceipt() {
         )}
       </header>
 
-      <form onSubmit={handleSubmit} className="space-y-4 px-4 pb-4 pt-4">
+      <form onSubmit={handleSubmit} className="page-body space-y-4 pb-4 pt-4">
         {!ocrEnabled && (
           <div className="rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             <span className="font-semibold">Photo scan</span>

@@ -82,7 +82,7 @@ export function ReceiptDetail() {
         </div>
       </header>
 
-      <div className="space-y-4 px-4 pt-4">
+      <div className="page-body space-y-4 pt-4">
         <div className="card flex items-center gap-4 p-4">
           {payer && <MemberAvatar member={payer} size="lg" />}
           <div className="min-w-0">
