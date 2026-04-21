@@ -6,7 +6,8 @@ import { useGroupStore } from '../store'
 import { useSessionStore } from '../store'
 import { LineItemRow } from '../components/LineItemRow'
 import { NavBar } from '../components/NavBar'
-import { isOcrEnabled, parseReceiptImage } from '../lib/ocr'
+import { isOcrEnabled, parseReceiptImage, checkImageQuality } from '../lib/ocr'
+import type { QualityIssue } from '../lib/ocr'
 import { round2, fmt } from '../lib/calculations'
 import { RECEIPT_CATEGORIES } from '../types'
 import type { DraftLineItem, ReceiptCategory } from '../types'
@@ -37,6 +38,7 @@ export function AddReceipt() {
   const [saving, setSaving] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [aiScanned, setAiScanned] = useState(false)
+  const [qualityIssue, setQualityIssue] = useState<{ issue: QualityIssue; message: string } | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const grandTotal = items.reduce((s, i) => s + (parseFloat(i.price) || 0), 0)
@@ -48,6 +50,15 @@ export function AddReceipt() {
   async function handleScan(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+
+    // Client-side quality gate before hitting the API
+    const quality = await checkImageQuality(file)
+    if (!quality.ok && quality.issue && quality.message) {
+      setQualityIssue({ issue: quality.issue, message: quality.message })
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
+
     setScanning(true)
     try {
       const result = await parseReceiptImage(file)
@@ -176,6 +187,38 @@ export function AddReceipt() {
               <span className="inline-block h-2.5 w-2.5 rounded-full bg-primary-400" />
               <span className="inline-block h-2.5 w-2.5 rounded-full bg-primary-400" />
               <span className="inline-block h-2.5 w-2.5 rounded-full bg-primary-400" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {qualityIssue && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-6 backdrop-blur-sm">
+          <div className="w-full max-w-sm space-y-4 rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-2xl animate-slide-up">
+            <div className="text-5xl">
+              {qualityIssue.issue === 'too_dark' ? '🌑' :
+               qualityIssue.issue === 'too_bright' ? '☀️' :
+               qualityIssue.issue === 'too_blurry' ? '🌫️' : '🔍'}
+            </div>
+            <div>
+              <p className="text-lg font-bold text-slate-900">Photo issue</p>
+              <p className="mt-1 text-sm text-slate-500">{qualityIssue.message}</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => { setQualityIssue(null); fileRef.current?.click() }}
+                className="btn-primary"
+              >
+                Try again
+              </button>
+              <button
+                type="button"
+                onClick={() => setQualityIssue(null)}
+                className="py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-700"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>
