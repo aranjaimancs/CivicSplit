@@ -79,7 +79,7 @@ function SignInScreen() {
           </div>
           <h1 className="text-[2.6rem] font-bold leading-none tracking-tight text-white">CivicSplit</h1>
           <p className="mx-auto mt-3 max-w-[260px] text-[13px] leading-relaxed text-white/60">
-            Sign in to access your cohort's expense tracker
+            Sign in to access your group's expense tracker
           </p>
         </div>
 
@@ -195,7 +195,7 @@ function JoinScreen({ onSignOut }: { onSignOut: () => void }) {
         .select('*')
         .eq('join_code', code)
         .single()
-      if (gErr || !group) throw new Error('Cohort not found. Double-check your code.')
+      if (gErr || !group) throw new Error('Group not found. Double-check your code.')
 
       const { data: existing } = await supabase
         .from('members')
@@ -298,7 +298,7 @@ function JoinScreen({ onSignOut }: { onSignOut: () => void }) {
           {existingGroups.length > 0 && (
             <div className="rounded-2xl bg-white/10 p-4 ring-1 ring-white/15">
               <p className="mb-2.5 text-[10px] font-bold uppercase tracking-wider text-white/50">
-                My cohorts
+                My groups
               </p>
               <div className="space-y-2">
                 {existingGroups.map((code) => {
@@ -326,11 +326,11 @@ function JoinScreen({ onSignOut }: { onSignOut: () => void }) {
             className="space-y-5 rounded-3xl bg-white p-7 shadow-[0_24px_64px_rgba(15,23,42,0.22)] ring-1 ring-black/5"
           >
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-              {existingGroups.length > 0 ? 'Join another cohort' : 'Join your cohort'}
+              {existingGroups.length > 0 ? 'Join another group' : 'Join your group'}
             </p>
             <div>
               <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">
-                Cohort code
+                Group code
               </label>
               <input
                 className="input-filled py-3.5 text-center font-mono text-xl uppercase tracking-[0.4em]"
@@ -357,7 +357,7 @@ function JoinScreen({ onSignOut }: { onSignOut: () => void }) {
               />
             </div>
             <button type="submit" disabled={loading} className="btn-primary">
-              {loading ? 'Joining…' : 'Join cohort'}
+              {loading ? 'Joining…' : 'Join group'}
             </button>
           </form>
         </div>

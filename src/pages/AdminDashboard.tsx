@@ -226,7 +226,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
 
       setSpendStats({ totalSpend, avgWeeklyPerGroup, highestCohort })
     } catch {
-      toast.error('Failed to load cohorts')
+      toast.error('Failed to load groups')
     } finally {
       setLoading(false)
     }
@@ -248,7 +248,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
 
       const memberMap = new Map((members ?? []).map((m) => [m.id, m.display_name]))
 
-      const headers = ['Cohort Name', 'Cohort Code', 'Date', 'Store', 'Category', 'Total ($)', 'Payer']
+      const headers = ['Group Name', 'Group Code', 'Date', 'Store', 'Category', 'Total ($)', 'Payer']
       const rows = (receipts ?? []).map((r) => {
         const raw = r.groups
         const g = (Array.isArray(raw) ? raw[0] : raw) as { name: string; join_code: string } | null
@@ -287,7 +287,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
     if (groups.length === 0) return
     const lines = groups.map((g) => `${g.name}: ${g.join_code}`)
     const text = [
-      'CivicSplit Cohort Codes',
+      'CivicSplit Group Codes',
       '='.repeat(24),
       ...lines,
       '',
@@ -338,7 +338,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-white p-4 shadow-card ring-1 ring-slate-900/5">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Cohorts</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Groups</p>
             <p className="mt-1 amount text-3xl font-bold tracking-tight text-slate-900">
               {loading ? '–' : groups.length}
             </p>
@@ -359,7 +359,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
             className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-900 py-3.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-slate-800 active:scale-[0.98]"
           >
             <PlusIcon className="h-4 w-4" />
-            New Cohort
+            New Group
           </button>
           <button
             type="button"
@@ -391,7 +391,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
               loading={loading}
             />
             <StatCard
-              label="Top Cohort"
+              label="Top Group"
               value={spendStats?.highestCohort?.name ?? '–'}
               sub={spendStats?.highestCohort ? fmt$(spendStats.highestCohort.total) : undefined}
               loading={loading}
@@ -419,8 +419,8 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
           </div>
         ) : groups.length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed border-slate-200 py-16 text-center">
-            <p className="text-sm font-semibold text-slate-500">No cohorts yet</p>
-            <p className="mt-1 text-xs text-slate-400">Click "New Cohort" to get started</p>
+            <p className="text-sm font-semibold text-slate-500">No groups yet</p>
+            <p className="mt-1 text-xs text-slate-400">Click "New Group" to get started</p>
           </div>
         ) : (
           <div className="space-y-2.5">
@@ -475,7 +475,7 @@ function GroupRow({
       toast.success(`${group.name} deleted`)
       onDeleted()
     } catch {
-      toast.error('Failed to delete cohort')
+      toast.error('Failed to delete group')
       setDeleting(false)
       setConfirmDelete(false)
     }
@@ -523,7 +523,7 @@ function GroupRow({
           type="button"
           onClick={() => setConfirmDelete(true)}
           className="flex h-[38px] w-[38px] items-center justify-center rounded-xl border border-rose-200 bg-white text-rose-400 transition-colors hover:bg-rose-50 hover:text-rose-600 active:scale-[0.95]"
-          title="Delete cohort"
+          title="Delete group"
         >
           <TrashIcon className="h-4 w-4" />
         </button>
@@ -764,7 +764,7 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
       setGeneratedCode(code)
       onCreated()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to create cohort')
+      toast.error(err instanceof Error ? err.message : 'Failed to create group')
       setSaving(false)
     }
   }
@@ -790,7 +790,7 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50 text-2xl">
               ✓
             </div>
-            <h2 className="text-lg font-bold text-slate-900">Cohort created</h2>
+            <h2 className="text-lg font-bold text-slate-900">Group created</h2>
             <p className="mt-1 text-sm text-slate-500">{createdName}</p>
             <div className="mt-5 rounded-2xl bg-slate-50 px-5 py-4 ring-1 ring-slate-200/80">
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Join code</p>
@@ -810,7 +810,7 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
           /* Create form */
           <>
             <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-900">New Cohort</h2>
+              <h2 className="text-lg font-bold text-slate-900">New Group</h2>
               <button
                 type="button"
                 onClick={onClose}
@@ -878,7 +878,7 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
               </div>
 
               <button type="submit" disabled={saving} className="btn-primary">
-                {saving ? 'Creating…' : 'Create Cohort'}
+                {saving ? 'Creating…' : 'Create Group'}
               </button>
             </form>
           </>
