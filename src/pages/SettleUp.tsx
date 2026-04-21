@@ -7,7 +7,7 @@ import { useSessionStore } from '../store'
 import { useBalances } from '../hooks/useBalances'
 import { NavBar } from '../components/NavBar'
 import { MemberAvatar } from '../components/MemberAvatar'
-import { fmt, venmoLink } from '../lib/calculations'
+import { fmt } from '../lib/calculations'
 import type { Transaction } from '../types'
 
 export function SettleUp() {
@@ -19,6 +19,7 @@ export function SettleUp() {
   const [settledIds, setSettledIds] = useState<Set<string>>(new Set())
   const [loadingId, setLoadingId] = useState<string | null>(null)
 
+  const [shownVenmo, setShownVenmo] = useState<string | null>(null)
   const [editingVenmo, setEditingVenmo] = useState(false)
   const [venmoHandle, setVenmoHandle] = useState('')
   const [savingVenmo, setSavingVenmo] = useState(false)
@@ -140,6 +141,7 @@ export function SettleUp() {
               const isMyPayment = tx.from.id === currentMemberId
               const isMyReceipt = tx.to.id === currentMemberId
               const toVenmo = tx.to.venmo_handle
+              const venmoVisible = shownVenmo === txKey
 
               return (
                 <div
@@ -164,21 +166,38 @@ export function SettleUp() {
                   </div>
 
                   {!isSettled && (
-                    <div className="mt-4 flex gap-2">
+                    <div className="mt-4 space-y-2">
                       {isMyPayment && toVenmo && (
-                        <a
-                          href={venmoLink(toVenmo, tx.amount, `CivicSplit – ${group?.name ?? ''}`)}
-                          className="flex-1 rounded-xl bg-[#008CFF] py-2.5 text-center text-sm font-semibold text-white shadow-sm transition-transform active:scale-[0.98]"
-                        >
-                          Pay with Venmo
-                        </a>
+                        venmoVisible ? (
+                          <div className="flex items-center justify-between gap-3 rounded-xl border border-[#008CFF]/30 bg-[#008CFF]/8 px-4 py-3">
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-[#008CFF]/70">Venmo</p>
+                              <p className="mt-0.5 font-mono text-base font-bold text-slate-900 select-all">@{toVenmo}</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setShownVenmo(null)}
+                              className="text-slate-400 hover:text-slate-600 text-xl leading-none"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setShownVenmo(txKey)}
+                            className="w-full rounded-xl bg-[#008CFF] py-2.5 text-sm font-semibold text-white shadow-sm transition-transform active:scale-[0.98]"
+                          >
+                            Pay with Venmo
+                          </button>
+                        )
                       )}
                       {(isMyPayment || isMyReceipt) && (
                         <button
                           type="button"
                           onClick={() => handleMarkPaid(tx)}
                           disabled={isLoading}
-                          className="flex-1 rounded-xl border border-emerald-200 bg-emerald-50 py-2.5 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-100 disabled:opacity-50"
+                          className="w-full rounded-xl border border-emerald-200 bg-emerald-50 py-2.5 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-100 disabled:opacity-50"
                         >
                           {isLoading ? '…' : 'Mark paid'}
                         </button>

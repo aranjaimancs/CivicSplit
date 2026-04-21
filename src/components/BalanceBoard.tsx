@@ -17,8 +17,8 @@ export function BalanceBoard({ balances, currentMemberId }: Props) {
   }
 
   return (
-    <div className="relative">
-      <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
+    <div className="relative -mx-1">
+      <div className="flex gap-2.5 overflow-x-auto px-1 pt-1 pb-2 no-scrollbar">
       {balances.map((b) => {
         const isPositive = b.net > 0.005
         const isNegative = b.net < -0.005

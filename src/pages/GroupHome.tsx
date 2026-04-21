@@ -160,7 +160,7 @@ export function GroupHome() {
       </header>
 
       <div className="page-body -mt-6 space-y-6">
-        <section className="card relative z-10 p-5 shadow-card-lift">
+        <section className="card relative z-10 px-5 pb-4 pt-5 shadow-card-lift">
           <div className="mb-3.5 flex items-center justify-between">
             <h2 className="text-[11px] font-bold uppercase tracking-[0.09em] text-slate-400">Balances</h2>
             <Link

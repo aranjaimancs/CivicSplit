@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
@@ -166,8 +166,23 @@ function JoinScreen({ onSignOut }: { onSignOut: () => void }) {
     user?.user_metadata?.full_name?.split(' ')[0] ?? ''
   )
   const [loading, setLoading] = useState(false)
+  const [groupNames, setGroupNames] = useState<Record<string, string>>({})
 
   const existingGroups = Object.keys(memberships)
+
+  useEffect(() => {
+    if (existingGroups.length === 0) return
+    supabase
+      .from('groups')
+      .select('join_code, name')
+      .in('join_code', existingGroups)
+      .then(({ data }) => {
+        if (!data) return
+        const map: Record<string, string> = {}
+        for (const g of data) map[g.join_code] = g.name
+        setGroupNames(map)
+      })
+  }, [existingGroups.join(',')])
 
   async function handleJoin(e: React.FormEvent) {
     e.preventDefault()
@@ -286,19 +301,21 @@ function JoinScreen({ onSignOut }: { onSignOut: () => void }) {
                 My cohorts
               </p>
               <div className="space-y-2">
-                {existingGroups.map((code) => (
-                  <button
-                    key={code}
-                    type="button"
-                    onClick={() => navigate(`/group/${code}`)}
-                    className="flex w-full items-center justify-between rounded-xl bg-white/10 px-4 py-3 text-left transition-colors hover:bg-white/20"
-                  >
-                    <span className="font-mono text-sm font-bold tracking-widest text-white">
-                      {code}
-                    </span>
-                    <span className="text-xs text-white/50">Open →</span>
-                  </button>
-                ))}
+                {existingGroups.map((code) => {
+                  const name = groupNames[code]
+                  const label = name ? `${name} (${code})` : code
+                  return (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => navigate(`/group/${code}`)}
+                      className="flex w-full items-center justify-between rounded-xl bg-white/10 px-4 py-3 text-left transition-colors hover:bg-white/20"
+                    >
+                      <span className="text-sm font-bold text-white">{label}</span>
+                      <span className="text-xs text-white/50">Open →</span>
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
