@@ -86,19 +86,19 @@ export function GroupHome() {
 
   return (
     <div className="min-h-screen bg-app-bg pb-36 animate-fade-in">
-      <header className="relative overflow-hidden bg-gradient-to-br from-primary-700 via-primary-600 to-primary-500 px-5 pb-10 pt-14 text-white">
+      <header className="relative overflow-hidden bg-gradient-to-br from-primary-700 via-primary-600 to-primary-500 px-4 pb-10 pt-12 text-white sm:px-5 sm:pt-14">
         <div className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
         <div className="pointer-events-none absolute bottom-0 left-0 h-40 w-40 rounded-full bg-black/10 blur-2xl" />
 
         <div className="relative mx-auto max-w-4xl">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white/90 backdrop-blur-sm">
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white/90 backdrop-blur-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
             Week {week} of {group.week_count}
           </div>
 
-          <h1 className="text-[2rem] font-bold leading-tight tracking-tight">{group.name}</h1>
+          <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight sm:text-[2rem]">{group.name}</h1>
 
-          <div className="mt-3.5 flex flex-wrap items-center gap-2">
+          <div className="mt-2.5 flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={copyJoinCode}
@@ -116,24 +116,24 @@ export function GroupHome() {
           </div>
 
           {myBalance && (
-            <div className="mt-5 rounded-2xl bg-white/[0.13] px-5 py-4 ring-1 ring-white/[0.18] backdrop-blur-sm">
-              <div className="flex items-start justify-between gap-4">
+            <div className="mt-4 rounded-2xl bg-white/[0.13] px-4 py-4 ring-1 ring-white/[0.18] backdrop-blur-sm sm:px-5">
+              <div className="flex items-start justify-between gap-3">
                 {/* Left: group balance */}
-                <div className="min-w-0">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/60">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/60 sm:text-[11px]">
                     {myBalance.net > 0.005 ? "You're owed" : myBalance.net < -0.005 ? "You owe" : "Your balance"}
                   </p>
-                  <p className="amount mt-1 text-[2.25rem] font-bold tracking-tight text-white leading-none">
+                  <p className="amount mt-1 text-[1.65rem] font-bold tracking-tight text-white leading-none sm:text-[2.25rem]">
                     {Math.abs(myBalance.net) < 0.005 ? '$0.00' : fmt(Math.abs(myBalance.net))}
                   </p>
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <p className="text-[13px] font-medium text-white/60">
-                      {myBalance.net > 0.005 ? 'from the group' : myBalance.net < -0.005 ? 'to the group' : 'all settled up'}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <p className="text-[12px] font-medium text-white/60 sm:text-[13px]">
+                      {myBalance.net > 0.005 ? 'from group' : myBalance.net < -0.005 ? 'to group' : 'all even'}
                     </p>
                     {Math.abs(myBalance.net) > 0.005 && (
                       <Link
                         to={`/group/${joinCode}/settle`}
-                        className="rounded-lg bg-white/15 px-2 py-0.5 text-[12px] font-bold text-white/90 ring-1 ring-white/20 transition-colors hover:bg-white/25"
+                        className="rounded-lg bg-white/15 px-2 py-0.5 text-[11px] font-bold text-white/90 ring-1 ring-white/20 transition-colors hover:bg-white/25 sm:text-[12px]"
                       >
                         Settle →
                       </Link>
@@ -143,12 +143,12 @@ export function GroupHome() {
 
                 {/* Right: stipend remaining */}
                 {group.stipend_amount > 0 && (
-                  <div className="shrink-0 text-right">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/60">Stipend left</p>
-                    <p className="amount mt-1 text-[2.25rem] font-bold tracking-tight text-white leading-none">
+                  <div className="min-w-0 flex-1 text-right">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/60 sm:text-[11px]">Stipend left</p>
+                    <p className="amount mt-1 text-[1.65rem] font-bold tracking-tight text-white leading-none sm:text-[2.25rem]">
                       {fmt(Math.max(group.stipend_amount - myBalance.owes, 0))}
                     </p>
-                    <p className="mt-1.5 text-[13px] font-medium text-white/60">
+                    <p className="mt-1.5 text-[12px] font-medium text-white/60 sm:text-[13px]">
                       of {fmt(group.stipend_amount)}
                     </p>
                   </div>

@@ -87,7 +87,7 @@ export function SettleUp() {
         {myBalance && (
           <div
             className={[
-              'rounded-2xl border p-5 shadow-card-lift',
+              'rounded-2xl border px-5 py-4 shadow-card-lift',
               myBalance.net > 0.005
                 ? 'border-emerald-200/80 bg-gradient-to-br from-emerald-500 to-teal-600 text-white'
                 : myBalance.net < -0.005
@@ -103,7 +103,7 @@ export function SettleUp() {
             >
               Your balance
             </p>
-            <p className="amount mt-1 text-4xl font-bold">
+            <p className="amount mt-1 text-[2rem] font-bold leading-none sm:text-4xl">
               {myBalance.net > 0.005
                 ? `+${fmt(myBalance.net)}`
                 : myBalance.net < -0.005
@@ -112,7 +112,7 @@ export function SettleUp() {
             </p>
             <p
               className={[
-                'mt-2 text-sm font-medium',
+                'mt-1.5 text-[13px] font-medium',
                 Math.abs(myBalance.net) <= 0.005 ? 'text-slate-600' : 'text-white/85',
               ].join(' ')}
             >
@@ -151,16 +151,16 @@ export function SettleUp() {
                   <div className="flex items-center gap-3">
                     <MemberAvatar member={tx.from} size="md" />
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                        <span className="text-sm font-semibold text-slate-900">
+                      <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                        <span className="text-[13px] font-semibold text-slate-900 sm:text-sm">
                           {tx.from.id === currentMemberId ? 'You' : tx.from.display_name}
                         </span>
-                        <ArrowIcon className="h-4 w-4 shrink-0 text-slate-300" />
-                        <span className="text-sm font-semibold text-slate-900">
+                        <ArrowIcon className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+                        <span className="text-[13px] font-semibold text-slate-900 sm:text-sm">
                           {tx.to.id === currentMemberId ? 'You' : tx.to.display_name}
                         </span>
                       </div>
-                      <p className="amount mt-1 text-[1.35rem] font-bold leading-tight text-slate-900">{fmt(tx.amount)}</p>
+                      <p className="amount mt-0.5 text-[1.25rem] font-bold leading-tight text-slate-900 sm:text-[1.35rem]">{fmt(tx.amount)}</p>
                     </div>
                     <MemberAvatar member={tx.to} size="md" />
                   </div>

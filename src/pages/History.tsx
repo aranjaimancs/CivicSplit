@@ -108,17 +108,18 @@ function WeekCard({
         </div>
 
         {!isEmpty && (
-          <div className="flex flex-shrink-0 items-center gap-2 text-right">
+          <div className="flex flex-shrink-0 items-center gap-1.5 text-right sm:gap-2">
             <div>
-              <p className="amount font-bold text-slate-900">{fmt(week.totalSpent)}</p>
+              <p className="amount text-[15px] font-bold text-slate-900">{fmt(week.totalSpent)}</p>
               {currentMemberId && (
-                <p className="text-xs text-slate-500">
-                  your share <span className="amount font-medium text-slate-600">{fmt(week.yourShare)}</span>
+                <p className="text-[11px] text-slate-400 sm:text-xs">
+                  your share{' '}
+                  <span className="amount font-semibold text-slate-600">{fmt(week.yourShare)}</span>
                 </p>
               )}
             </div>
             <div className={['text-slate-300 transition-transform', expanded && 'rotate-180'].join(' ')}>
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </div>

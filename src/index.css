@@ -39,7 +39,7 @@
   /* ── Inputs ─────────────────────────────── */
   .input-filled {
     @apply w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-[15px] text-slate-900
-           placeholder:text-slate-400 shadow-sm
+           placeholder:text-slate-400 shadow-sm min-h-[44px]
            focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-300/30
            transition-[border-color,box-shadow] duration-150;
   }
@@ -65,7 +65,7 @@
 
   /* ── Page headers ───────────────────────── */
   .page-header {
-    @apply sticky top-0 z-30 border-b border-slate-200/60 bg-white/90 px-4 pb-3 backdrop-blur-xl;
+    @apply sticky top-0 z-30 border-b border-slate-200/60 bg-white/90 px-4 pb-3.5 backdrop-blur-xl;
     padding-top: max(2.75rem, calc(env(safe-area-inset-top, 0px) + 0.75rem));
   }
 

@@ -28,7 +28,7 @@ export function BalanceBoard({ balances, currentMemberId }: Props) {
           <div
             key={b.member.id}
             className={[
-              'flex w-[136px] flex-shrink-0 flex-col gap-3 rounded-2xl p-4 transition-transform active:scale-[0.98]',
+              'flex w-[120px] flex-shrink-0 flex-col gap-2.5 rounded-2xl p-3.5 transition-transform active:scale-[0.98] sm:w-[136px] sm:gap-3 sm:p-4',
               isMe
                 ? 'bg-primary-50 ring-2 ring-primary-400/40'
                 : isPositive
@@ -40,12 +40,12 @@ export function BalanceBoard({ balances, currentMemberId }: Props) {
           >
             <MemberAvatar member={b.member} size="md" ring={isMe} />
             <div className="min-w-0">
-              <div className="truncate text-[13px] font-semibold leading-tight text-slate-700">
+              <div className="truncate text-[12px] font-semibold leading-tight text-slate-700 sm:text-[13px]">
                 {isMe ? 'You' : b.member.display_name}
               </div>
               <div
                 className={[
-                  'amount mt-1.5 text-xl font-bold tracking-tight',
+                  'amount mt-1 text-[1.05rem] font-bold tracking-tight sm:text-xl',
                   isPositive ? 'text-emerald-600' : isNegative ? 'text-rose-600' : 'text-slate-400',
                 ].join(' ')}
               >
