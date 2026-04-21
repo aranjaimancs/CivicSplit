@@ -11,7 +11,6 @@ import { ReceiptCard } from '../components/ReceiptCard'
 import { NavBar } from '../components/NavBar'
 import { GroupHomeSkeleton } from '../components/SkeletonScreen'
 import { SettleUpSunday } from '../components/SettleUpSunday'
-import { BudgetTracker } from '../components/BudgetTracker'
 import { fmt } from '../lib/calculations'
 import { isSunday, hasDismissedThisSunday, dismissThisSunday } from '../lib/sunday'
 
@@ -119,6 +118,7 @@ export function GroupHome() {
           {myBalance && (
             <div className="mt-5 rounded-2xl bg-white/[0.13] px-5 py-4 ring-1 ring-white/[0.18] backdrop-blur-sm">
               <div className="flex items-start justify-between gap-4">
+                {/* Left: group balance */}
                 <div className="min-w-0">
                   <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/60">
                     {myBalance.net > 0.005 ? "You're owed" : myBalance.net < -0.005 ? "You owe" : "Your balance"}
@@ -126,21 +126,32 @@ export function GroupHome() {
                   <p className="amount mt-1 text-[2.25rem] font-bold tracking-tight text-white leading-none">
                     {Math.abs(myBalance.net) < 0.005 ? '$0.00' : fmt(Math.abs(myBalance.net))}
                   </p>
-                  <p className="mt-1.5 text-[13px] font-medium text-white/60">
-                    {myBalance.net > 0.005
-                      ? 'from the group'
-                      : myBalance.net < -0.005
-                      ? 'to the group'
-                      : 'all settled up'}
-                  </p>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <p className="text-[13px] font-medium text-white/60">
+                      {myBalance.net > 0.005 ? 'from the group' : myBalance.net < -0.005 ? 'to the group' : 'all settled up'}
+                    </p>
+                    {Math.abs(myBalance.net) > 0.005 && (
+                      <Link
+                        to={`/group/${joinCode}/settle`}
+                        className="rounded-lg bg-white/15 px-2 py-0.5 text-[12px] font-bold text-white/90 ring-1 ring-white/20 transition-colors hover:bg-white/25"
+                      >
+                        Settle →
+                      </Link>
+                    )}
+                  </div>
                 </div>
-                {Math.abs(myBalance.net) > 0.005 && (
-                  <Link
-                    to={`/group/${joinCode}/settle`}
-                    className="shrink-0 self-center rounded-xl bg-white/20 px-4 py-2 text-[13px] font-bold text-white ring-1 ring-white/25 transition-colors hover:bg-white/30 active:scale-[0.97]"
-                  >
-                    Settle
-                  </Link>
+
+                {/* Right: stipend remaining */}
+                {group.stipend_amount > 0 && (
+                  <div className="shrink-0 text-right">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-white/60">Stipend left</p>
+                    <p className="amount mt-1 text-[2.25rem] font-bold tracking-tight text-white leading-none">
+                      {fmt(Math.max(group.stipend_amount - myBalance.owes, 0))}
+                    </p>
+                    <p className="mt-1.5 text-[13px] font-medium text-white/60">
+                      of {fmt(group.stipend_amount)}
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
@@ -149,15 +160,6 @@ export function GroupHome() {
       </header>
 
       <div className="page-body -mt-6 space-y-6">
-        {myBalance && currentMemberId && (
-          <BudgetTracker
-            stipend={group.stipend_amount}
-            groupExpenses={myBalance.owes}
-            memberId={currentMemberId}
-            rentAmount={members.find(m => m.id === currentMemberId)?.rent_amount ?? 0}
-          />
-        )}
-
         <section className="card relative z-10 p-5 shadow-card-lift">
           <div className="mb-3.5 flex items-center justify-between">
             <h2 className="text-[11px] font-bold uppercase tracking-[0.09em] text-slate-400">Balances</h2>
