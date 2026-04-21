@@ -470,12 +470,60 @@ function GroupRow({
   async function handleDelete() {
     setDeleting(true)
     try {
-      const { error } = await supabase.from('groups').delete().eq('id', group.id)
-      if (error) throw error
+      // Fetch receipt IDs first so we can delete their line items
+      const { data: receipts } = await supabase
+        .from('receipts')
+        .select('id')
+        .eq('group_id', group.id)
+
+      const receiptIds = (receipts ?? []).map((r) => r.id)
+
+      if (receiptIds.length > 0) {
+        // Delete line_item_splits → line_items in order
+        const { data: lineItems } = await supabase
+          .from('line_items')
+          .select('id')
+          .in('receipt_id', receiptIds)
+
+        const lineItemIds = (lineItems ?? []).map((li) => li.id)
+
+        if (lineItemIds.length > 0) {
+          const { error: splitsErr } = await supabase
+            .from('line_item_splits')
+            .delete()
+            .in('line_item_id', lineItemIds)
+          if (splitsErr) throw splitsErr
+        }
+
+        const { error: liErr } = await supabase
+          .from('line_items')
+          .delete()
+          .in('receipt_id', receiptIds)
+        if (liErr) throw liErr
+      }
+
+      // Delete receipts, settlements, members, then the group itself
+      const { error: rErr } = await supabase.from('receipts').delete().eq('group_id', group.id)
+      if (rErr) throw rErr
+
+      const { error: sErr } = await supabase.from('settlements').delete().eq('group_id', group.id)
+      if (sErr) throw sErr
+
+      const { error: mErr } = await supabase.from('members').delete().eq('group_id', group.id)
+      if (mErr) throw mErr
+
+      const { error: gErr, count } = await supabase
+        .from('groups')
+        .delete({ count: 'exact' })
+        .eq('id', group.id)
+      if (gErr) throw gErr
+      if (count === 0) throw new Error('Delete was blocked — check admin permissions.')
+
       toast.success(`${group.name} deleted`)
       onDeleted()
-    } catch {
-      toast.error('Failed to delete group')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete group'
+      toast.error(msg)
       setDeleting(false)
       setConfirmDelete(false)
     }
