@@ -67,6 +67,7 @@ interface GroupState {
   addReceipt: (receipt: Receipt) => void
   updateReceipt: (receipt: Receipt) => void
   removeReceipt: (id: string) => void
+  updateMember: (id: string, patch: Partial<Member>) => void
   setLoading: (v: boolean) => void
   setError: (e: string | null) => void
   reset: () => void
@@ -104,6 +105,9 @@ export const useGroupStore = create<GroupState>()((set) => ({
 
   removeReceipt: (id) =>
     set((s) => ({ receipts: s.receipts.filter((r) => r.id !== id) })),
+
+  updateMember: (id, patch) =>
+    set((s) => ({ members: s.members.map((m) => m.id === id ? { ...m, ...patch } : m) })),
 
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),

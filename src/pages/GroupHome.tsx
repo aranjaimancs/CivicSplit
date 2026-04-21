@@ -11,6 +11,7 @@ import { ReceiptCard } from '../components/ReceiptCard'
 import { NavBar } from '../components/NavBar'
 import { GroupHomeSkeleton } from '../components/SkeletonScreen'
 import { SettleUpSunday } from '../components/SettleUpSunday'
+import { BudgetTracker } from '../components/BudgetTracker'
 import { fmt } from '../lib/calculations'
 import { isSunday, hasDismissedThisSunday, dismissThisSunday } from '../lib/sunday'
 
@@ -148,6 +149,15 @@ export function GroupHome() {
       </header>
 
       <div className="page-body -mt-6 space-y-6">
+        {myBalance && currentMemberId && (
+          <BudgetTracker
+            stipend={group.stipend_amount}
+            groupExpenses={myBalance.owes}
+            memberId={currentMemberId}
+            rentAmount={members.find(m => m.id === currentMemberId)?.rent_amount ?? 0}
+          />
+        )}
+
         <section className="card relative z-10 p-5 shadow-card-lift">
           <div className="mb-3.5 flex items-center justify-between">
             <h2 className="text-[11px] font-bold uppercase tracking-[0.09em] text-slate-400">Balances</h2>

@@ -18,6 +18,7 @@ export interface Member {
   display_name: string
   avatar_color: string
   venmo_handle?: string | null
+  rent_amount?: number | null
   created_at: string
 }
 

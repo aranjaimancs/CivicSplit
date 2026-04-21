@@ -218,7 +218,14 @@ function JoinScreen({ onSignOut }: { onSignOut: () => void }) {
       toast.success(`Welcome to ${group.name}!`)
       navigate(`/group/${code}`)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to join cohort')
+      const msg =
+        err instanceof Error
+          ? err.message
+          : typeof err === 'object' && err !== null && 'message' in err
+          ? String((err as { message: unknown }).message)
+          : JSON.stringify(err)
+      toast.error(msg)
+      console.error('[Join cohort error]', err)
     } finally {
       setLoading(false)
     }
