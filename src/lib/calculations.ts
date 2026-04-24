@@ -130,7 +130,7 @@ export function round2(n: number): number {
 }
 
 /** Generate a Venmo deep link */
-export function venmoLink(handle: string, amount: number, note = 'CivicSplit'): string {
+export function venmoLink(handle: string, amount: number, note = 'BudgetSplit'): string {
   const params = new URLSearchParams({
     txn: 'pay',
     recipients: handle,

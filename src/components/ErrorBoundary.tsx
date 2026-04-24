@@ -18,8 +18,8 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     // Log for debugging without exposing to the user
-    console.error('[CivicSplit] Unhandled error:', error.message)
-    console.error('[CivicSplit] Component stack:', info.componentStack)
+    console.error('[BudgetSplit] Unhandled error:', error.message)
+    console.error('[BudgetSplit] Component stack:', info.componentStack)
   }
 
   handleReset = () => {
@@ -40,13 +40,13 @@ export class ErrorBoundary extends Component<Props, State> {
         {/* Icon */}
         <div className="relative mb-8 flex h-24 w-24 items-center justify-center">
           <div className="absolute inset-0 rounded-[1.75rem] bg-white/10 shadow-2xl ring-1 ring-white/20 backdrop-blur-sm" />
-          <span className="relative text-5xl">🏛️</span>
+          <span className="relative text-5xl">💰</span>
         </div>
 
         {/* Heading */}
         <h1 className="text-2xl font-bold tracking-tight text-white">Something went wrong</h1>
         <p className="mt-2 max-w-xs text-center text-sm text-white/60">
-          CivicSplit hit an unexpected error. Clearing the cache usually fixes it.
+          BudgetSplit hit an unexpected error. Clearing the cache usually fixes it.
         </p>
 
         {/* Error detail (collapsed by default) */}
@@ -69,7 +69,7 @@ export class ErrorBoundary extends Component<Props, State> {
         </button>
 
         <p className="mt-4 text-xs text-white/30">
-          Morehead-Cain Foundation · CivicSplit
+          BudgetSplit
         </p>
       </div>
     )

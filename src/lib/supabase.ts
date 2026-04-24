@@ -5,7 +5,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error(
-    '[CivicSplit] Missing Supabase env vars. Copy .env.example → .env and fill in your project credentials.'
+    '[BudgetSplit] Missing Supabase env vars. Copy .env.example → .env and fill in your project credentials.'
   )
 }
 

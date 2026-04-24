@@ -1,7 +1,7 @@
 {
-  "name": "CivicSplit",
-  "short_name": "CivicSplit",
-  "description": "Group expense splitting for Morehead-Cain cohorts",
+  "name": "BudgetSplit",
+  "short_name": "BudgetSplit",
+  "description": "Group expense splitting made easy",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#312E81",

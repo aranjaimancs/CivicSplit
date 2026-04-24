@@ -9,7 +9,7 @@ export function isSunday(): boolean {
 
 function dismissKey(joinCode: string): string {
   const today = new Date().toISOString().split('T')[0] // "2026-04-19"
-  return `civicsplit_sus_${joinCode}_${today}`
+  return `budgetsplit_sus_${joinCode}_${today}`
 }
 
 export function hasDismissedThisSunday(joinCode: string): boolean {

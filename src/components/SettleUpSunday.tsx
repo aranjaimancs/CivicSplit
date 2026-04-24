@@ -143,7 +143,7 @@ function TxRow({
       {/* Action */}
       {direction === 'out' && toVenmo ? (
         <a
-          href={venmoLink(toVenmo, tx.amount, `CivicSplit – ${groupName}`)}
+          href={venmoLink(toVenmo, tx.amount, `BudgetSplit – ${groupName}`)}
           className="shrink-0 rounded-xl bg-[#008CFF] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-transform active:scale-95"
         >
           Venmo

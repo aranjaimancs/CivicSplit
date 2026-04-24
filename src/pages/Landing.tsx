@@ -75,9 +75,9 @@ function SignInScreen() {
           <div className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center">
             <div className="absolute inset-0 rounded-[1.75rem] bg-white/10 shadow-2xl shadow-black/20 ring-1 ring-white/20 backdrop-blur-sm" />
             <div className="absolute inset-[3px] rounded-[1.4rem] bg-gradient-to-br from-white/15 to-transparent" />
-            <span className="relative text-5xl">🏛️</span>
+            <span className="relative text-5xl">💰</span>
           </div>
-          <h1 className="text-[2.6rem] font-bold leading-none tracking-tight text-white">CivicSplit</h1>
+          <h1 className="text-[2.6rem] font-bold leading-none tracking-tight text-white">BudgetSplit</h1>
           <p className="mx-auto mt-3 max-w-[260px] text-[13px] leading-relaxed text-white/60">
             Sign in to access your group's expense tracker
           </p>
@@ -143,7 +143,7 @@ function SignInScreen() {
       </div>
 
       <p className="relative pb-8 text-center text-xs text-white/25">
-        Morehead-Cain Foundation · 2026 ·{' '}
+        2026 ·{' '}
         <Link
           to="/admin"
           className="underline decoration-white/20 underline-offset-2 transition-colors hover:text-white/50"
@@ -288,9 +288,9 @@ function JoinScreen({ onSignOut }: { onSignOut: () => void }) {
         <div className="mb-8 animate-fade-in text-center">
           <div className="relative mx-auto mb-5 flex h-20 w-20 items-center justify-center">
             <div className="absolute inset-0 rounded-[1.5rem] bg-white/10 shadow-2xl shadow-black/20 ring-1 ring-white/20 backdrop-blur-sm" />
-            <span className="relative text-4xl">🏛️</span>
+            <span className="relative text-4xl">💰</span>
           </div>
-          <h1 className="text-[2.2rem] font-bold leading-none tracking-tight text-white">CivicSplit</h1>
+          <h1 className="text-[2.2rem] font-bold leading-none tracking-tight text-white">BudgetSplit</h1>
         </div>
 
         <div className="w-full max-w-sm animate-slide-up space-y-4">
@@ -364,7 +364,7 @@ function JoinScreen({ onSignOut }: { onSignOut: () => void }) {
       </div>
 
       <p className="relative pb-8 text-center text-xs text-white/25">
-        Morehead-Cain Foundation · 2026 ·{' '}
+        2026 ·{' '}
         <Link
           to="/admin"
           className="underline decoration-white/20 underline-offset-2 transition-colors hover:text-white/50"

@@ -43,7 +43,7 @@ export const useSessionStore = create<SessionState>()(
 
       hydrateMemberships: (map) => set({ memberships: map }),
     }),
-    { name: 'civicsplit-session' }
+    { name: 'budgetsplit-session' }
   )
 )
 

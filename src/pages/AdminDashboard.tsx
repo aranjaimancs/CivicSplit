@@ -268,7 +268,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
       const url = URL.createObjectURL(blob)
       const anchor = document.createElement('a')
       anchor.href = url
-      anchor.download = `civicsplit-summer-${new Date().toISOString().split('T')[0]}.csv`
+      anchor.download = `budgetsplit-${new Date().toISOString().split('T')[0]}.csv`
       anchor.click()
       URL.revokeObjectURL(url)
       toast.success(`${rows.length} receipts exported`)
@@ -287,7 +287,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
     if (groups.length === 0) return
     const lines = groups.map((g) => `${g.name}: ${g.join_code}`)
     const text = [
-      'CivicSplit Group Codes',
+      'BudgetSplit Group Codes',
       '='.repeat(24),
       ...lines,
       '',
@@ -307,10 +307,10 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
         <div className="flex items-center justify-between px-4 py-3.5">
           <div className="flex items-center gap-2.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-sm shadow-sm">
-              🏛️
+              💰
             </span>
             <div>
-              <p className="text-sm font-bold leading-tight text-slate-900">CivicSplit</p>
+              <p className="text-sm font-bold leading-tight text-slate-900">BudgetSplit</p>
               <p className="text-[10px] font-bold uppercase leading-tight tracking-widest text-slate-400">
                 Admin
               </p>
