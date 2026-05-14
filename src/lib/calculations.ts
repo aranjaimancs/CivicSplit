@@ -38,12 +38,14 @@ export function computeBalances(
       const price = Number(item.price)
 
       if (item.split_type === 'shared') {
-        // Split equally among all members
-        const share = price / members.length
+        // Split equally among all members using integer arithmetic to avoid
+        // floating-point accumulation (e.g. $10 ÷ 3 must sum to exactly $10).
         paid[payer] = (paid[payer] ?? 0) + price
-        for (const m of members) {
-          owes[m.id] = (owes[m.id] ?? 0) + share
-        }
+        const base = round2(Math.floor(price * 100 / members.length) / 100)
+        const remainder = round2(price - base * members.length)
+        members.forEach((m, idx) => {
+          owes[m.id] = (owes[m.id] ?? 0) + (idx === 0 ? round2(base + remainder) : base)
+        })
       } else if (item.split_type === 'personal') {
         // Payer paid AND owes — nets to zero in group balances
         paid[payer] = (paid[payer] ?? 0) + price

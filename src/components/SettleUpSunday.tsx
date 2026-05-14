@@ -129,7 +129,7 @@ function TxRow({
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
         style={{ backgroundColor: other.avatar_color }}
       >
-        {other.display_name[0].toUpperCase()}
+        {(other.display_name?.[0] ?? '?').toUpperCase()}
       </div>
 
       {/* Label */}

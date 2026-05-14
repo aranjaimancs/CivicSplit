@@ -11,6 +11,8 @@ import { ReceiptCard } from '../components/ReceiptCard'
 import { NavBar } from '../components/NavBar'
 import { GroupHomeSkeleton } from '../components/SkeletonScreen'
 import { SettleUpSunday } from '../components/SettleUpSunday'
+import { SpendingBreakdownSheet } from '../components/SpendingBreakdownSheet'
+import { BudgetGuide } from '../components/BudgetGuide'
 import { fmt } from '../lib/calculations'
 import { isSunday, hasDismissedThisSunday, dismissThisSunday } from '../lib/sunday'
 
@@ -28,6 +30,7 @@ export function GroupHome() {
   const myBalance = balances.find((b) => b.member.id === currentMemberId)
 
   const [sundayDismissed, setSundayDismissed] = useState(false)
+  const [showBreakdown, setShowBreakdown] = useState(false)
 
   function handleSundayDismiss() {
     dismissThisSunday(joinCode ?? '')
@@ -113,6 +116,16 @@ export function GroupHome() {
             </span>
             <span className="text-xs text-white/40">·</span>
             <span className="amount text-xs font-semibold text-white/80">{fmt(totalSpend)} total</span>
+            <button
+              type="button"
+              onClick={() => setShowBreakdown(true)}
+              className="flex items-center gap-1 rounded-lg bg-white/15 px-2 py-0.5 text-[11px] font-bold text-white/90 ring-1 ring-white/20 transition-colors hover:bg-white/25 active:scale-[0.97]"
+            >
+              Breakdown
+              <svg className="h-3 w-3 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.5h4.5m0 0V18m0-4.5L3 18M21 10.5h-4.5m0 0V6m0 4.5L21 6M3 6h6m12 12h-6" />
+              </svg>
+            </button>
           </div>
 
           {myBalance && (
@@ -173,6 +186,16 @@ export function GroupHome() {
           <BalanceBoard balances={balances} currentMemberId={currentMemberId} />
         </section>
 
+        {group.stipend_amount > 0 && myBalance && (
+          <BudgetGuide
+            group={group}
+            receipts={receipts}
+            members={members}
+            currentMemberId={currentMemberId}
+            currentWeek={week}
+          />
+        )}
+
         <section>
           <div className="mb-3.5 flex items-center justify-between">
             <h2 className="text-[11px] font-bold uppercase tracking-[0.09em] text-slate-400">Recent expenses</h2>
@@ -218,6 +241,16 @@ export function GroupHome() {
           transactions={transactions}
           currentMemberId={currentMemberId}
           onDismiss={handleSundayDismiss}
+        />
+      )}
+
+      {showBreakdown && (
+        <SpendingBreakdownSheet
+          group={group}
+          receipts={receipts}
+          members={members}
+          currentMemberId={currentMemberId}
+          onClose={() => setShowBreakdown(false)}
         />
       )}
     </div>

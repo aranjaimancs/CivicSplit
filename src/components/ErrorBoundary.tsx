@@ -23,7 +23,10 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   handleReset = () => {
-    localStorage.clear()
+    // Only clear BudgetSplit keys — don't nuke unrelated app data
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith('budgetsplit'))
+      .forEach((k) => localStorage.removeItem(k))
     window.location.reload()
   }
 

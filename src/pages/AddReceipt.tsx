@@ -7,7 +7,7 @@ import { useSessionStore } from '../store'
 import { LineItemRow } from '../components/LineItemRow'
 import { NavBar } from '../components/NavBar'
 import { isOcrEnabled, parseReceiptImage, checkImageQuality } from '../lib/ocr'
-import type { QualityIssue } from '../lib/ocr'
+import { DAILY_SCAN_LIMIT, getScansUsed, incrementScansUsed, scansRemaining } from '../lib/scanLimit'
 import { round2, fmt } from '../lib/calculations'
 import { RECEIPT_CATEGORIES } from '../types'
 import type { DraftLineItem, ReceiptCategory } from '../types'
@@ -38,7 +38,8 @@ export function AddReceipt() {
   const [saving, setSaving] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [aiScanned, setAiScanned] = useState(false)
-  const [qualityIssue, setQualityIssue] = useState<{ issue: QualityIssue; message: string } | null>(null)
+  const [scanError, setScanError] = useState<{ emoji: string; title: string; message: string } | null>(null)
+  const [scansUsed, setScansUsed] = useState(() => getScansUsed(joinCode ?? ''))
   const fileRef = useRef<HTMLInputElement>(null)
 
   const grandTotal = items.reduce((s, i) => s + (parseFloat(i.price) || 0), 0)
@@ -51,10 +52,23 @@ export function AddReceipt() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Client-side quality gate before hitting the API
+    if (scansRemaining(joinCode ?? '') <= 0) {
+      setScanError({
+        emoji: '🚫',
+        title: 'Daily limit reached',
+        message: `Your group gets ${DAILY_SCAN_LIMIT} scans per day. Resets at midnight.`,
+      })
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
+
+    // Client-side quality gate — failures don't cost a scan
     const quality = await checkImageQuality(file)
     if (!quality.ok && quality.issue && quality.message) {
-      setQualityIssue({ issue: quality.issue, message: quality.message })
+      const EMOJI: Record<string, string> = {
+        too_dark: '🌑', too_bright: '☀️', too_blurry: '🌫️', too_small: '🔍',
+      }
+      setScanError({ emoji: EMOJI[quality.issue] ?? '🔍', title: 'Photo issue', message: quality.message })
       if (fileRef.current) fileRef.current.value = ''
       return
     }
@@ -62,6 +76,9 @@ export function AddReceipt() {
     setScanning(true)
     try {
       const result = await parseReceiptImage(file)
+      // Only count successful AI calls against the daily limit
+      const used = incrementScansUsed(joinCode ?? '')
+      setScansUsed(used)
       if (result.storeName) setStoreName(result.storeName)
       if (result.date) setDate(result.date)
       setItems(
@@ -81,7 +98,12 @@ export function AddReceipt() {
       setAiScanned(true)
       toast.success(`Found ${result.items.length} items`)
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Scan failed')
+      // AI rejected the image (not a receipt, unreadable, etc.) — does NOT count as a scan
+      setScanError({
+        emoji: '🧾',
+        title: 'Couldn\'t read receipt',
+        message: e instanceof Error ? e.message : 'Try a clearer photo of the receipt.',
+      })
     } finally {
       setScanning(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -192,29 +214,33 @@ export function AddReceipt() {
         </div>
       )}
 
-      {qualityIssue && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-6 backdrop-blur-sm">
+      {scanError && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm"
+          style={{
+            paddingTop: 'max(1.5rem, env(safe-area-inset-top))',
+            paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+            paddingLeft: '1.5rem',
+            paddingRight: '1.5rem',
+          }}
+        >
           <div className="w-full max-w-sm space-y-4 rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-2xl animate-slide-up">
-            <div className="text-5xl">
-              {qualityIssue.issue === 'too_dark' ? '🌑' :
-               qualityIssue.issue === 'too_bright' ? '☀️' :
-               qualityIssue.issue === 'too_blurry' ? '🌫️' : '🔍'}
-            </div>
+            <div className="text-5xl">{scanError.emoji}</div>
             <div>
-              <p className="text-lg font-bold text-slate-900">Photo issue</p>
-              <p className="mt-1 text-sm text-slate-500">{qualityIssue.message}</p>
+              <p className="text-lg font-bold text-slate-900">{scanError.title}</p>
+              <p className="mt-1 text-sm text-slate-500">{scanError.message}</p>
             </div>
             <div className="flex flex-col gap-2">
               <button
                 type="button"
-                onClick={() => { setQualityIssue(null); fileRef.current?.click() }}
+                onClick={() => { setScanError(null); fileRef.current?.click() }}
                 className="btn-primary"
               >
                 Try again
               </button>
               <button
                 type="button"
-                onClick={() => setQualityIssue(null)}
+                onClick={() => setScanError(null)}
                 className="py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-700"
               >
                 Cancel
@@ -235,7 +261,8 @@ export function AddReceipt() {
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              className="flex items-center gap-1.5 rounded-xl bg-primary-600 px-3.5 py-2 text-sm font-semibold text-white shadow-md shadow-primary-600/25 active:scale-95"
+              disabled={scansUsed >= DAILY_SCAN_LIMIT}
+              className="flex items-center gap-1.5 rounded-xl bg-primary-600 px-3.5 py-2 text-sm font-semibold text-white shadow-md shadow-primary-600/25 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <span aria-hidden>📷</span>
               Scan
@@ -252,6 +279,10 @@ export function AddReceipt() {
             add <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs">VITE_OPENAI_KEY</code> to{' '}
             <code className="rounded bg-amber-100 px-1 py-0.5 font-mono text-xs">.env.local</code> to auto-fill from a photo.
           </div>
+        )}
+
+        {ocrEnabled && (
+          <ScanLimitBar used={scansUsed} limit={DAILY_SCAN_LIMIT} />
         )}
 
         {aiScanned && (
@@ -300,7 +331,7 @@ export function AddReceipt() {
               </select>
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <div className="flex-1">
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Date</label>
               <input type="date" className="input-filled" value={date} onChange={(e) => setDate(e.target.value)} />
@@ -351,6 +382,53 @@ export function AddReceipt() {
       </form>
 
       <NavBar joinCode={joinCode ?? ''} />
+    </div>
+  )
+}
+
+function ScanLimitBar({ used, limit }: { used: number; limit: number }) {
+  const remaining = Math.max(0, limit - used)
+  const pct = Math.min(100, (used / limit) * 100)
+  const atLimit = remaining === 0
+  const nearLimit = remaining === 1
+
+  return (
+    <div className={[
+      'flex items-center gap-3 rounded-2xl border px-4 py-2.5',
+      atLimit
+        ? 'border-rose-200/80 bg-rose-50'
+        : nearLimit
+        ? 'border-amber-200/80 bg-amber-50'
+        : 'border-slate-200 bg-white',
+    ].join(' ')}>
+      <span className="text-base" aria-hidden>📷</span>
+      <div className="min-w-0 flex-1">
+        <div className="mb-1.5 flex items-center justify-between gap-2">
+          <span className={[
+            'text-xs font-semibold',
+            atLimit ? 'text-rose-700' : nearLimit ? 'text-amber-700' : 'text-slate-600',
+          ].join(' ')}>
+            {atLimit
+              ? 'Scan limit reached — resets tomorrow'
+              : `${remaining} scan${remaining === 1 ? '' : 's'} left today`}
+          </span>
+          <span className={[
+            'shrink-0 text-[11px] font-bold tabular-nums',
+            atLimit ? 'text-rose-500' : nearLimit ? 'text-amber-500' : 'text-slate-400',
+          ].join(' ')}>
+            {used}/{limit}
+          </span>
+        </div>
+        <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+          <div
+            className={[
+              'h-full rounded-full transition-all duration-300',
+              atLimit ? 'bg-rose-500' : nearLimit ? 'bg-amber-400' : 'bg-primary-500',
+            ].join(' ')}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
     </div>
   )
 }

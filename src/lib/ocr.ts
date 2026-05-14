@@ -65,7 +65,7 @@ export function checkImageQuality(file: File): Promise<QualityCheckResult> {
       resolve({ ok: true })
     }
 
-    img.onerror = () => { URL.revokeObjectURL(url); resolve({ ok: true }) }
+    img.onerror = () => { URL.revokeObjectURL(url); resolve({ ok: false, issue: 'too_small', message: QUALITY_MESSAGES.too_small }) }
     img.src = url
   })
 }
