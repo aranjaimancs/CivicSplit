@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { useGroup } from '../hooks/useGroup'
@@ -13,8 +13,10 @@ import { GroupHomeSkeleton } from '../components/SkeletonScreen'
 import { SettleUpSunday } from '../components/SettleUpSunday'
 import { SpendingBreakdownSheet } from '../components/SpendingBreakdownSheet'
 import { BudgetGuide } from '../components/BudgetGuide'
+import { HowToSheet } from '../components/HowToSheet'
 import { fmt } from '../lib/calculations'
 import { isSunday, hasDismissedThisSunday, dismissThisSunday } from '../lib/sunday'
+import { hasSeenOnboarding, markOnboardingSeen } from '../lib/onboarding'
 
 export function GroupHome() {
   const { joinCode } = useParams<{ joinCode: string }>()
@@ -26,11 +28,21 @@ export function GroupHome() {
   useGroup(joinCode)
   useRealtime(group?.id)
 
+  // Show onboarding the first time a user lands on a group
+  useEffect(() => {
+    if (!joinCode || !group || !currentMemberId) return
+    if (!hasSeenOnboarding(joinCode)) {
+      setShowHelp(true)
+      markOnboardingSeen(joinCode)
+    }
+  }, [joinCode, group, currentMemberId])
+
   const { balances, transactions } = useBalances()
   const myBalance = balances.find((b) => b.member.id === currentMemberId)
 
   const [sundayDismissed, setSundayDismissed] = useState(false)
   const [showBreakdown, setShowBreakdown] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
 
   function handleSundayDismiss() {
     dismissThisSunday(joinCode ?? '')
@@ -94,6 +106,16 @@ export function GroupHome() {
         <div className="pointer-events-none absolute bottom-0 left-0 h-40 w-40 rounded-full bg-black/10 blur-2xl" />
 
         <div className="relative mx-auto max-w-4xl">
+          {/* Help button */}
+          <button
+            type="button"
+            onClick={() => setShowHelp(true)}
+            className="absolute right-0 top-0 flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-sm font-bold text-white/80 ring-1 ring-white/20 transition-colors hover:bg-white/25"
+            aria-label="How to use BudgetSplit"
+          >
+            ?
+          </button>
+
           <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold text-white/90 backdrop-blur-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
             Week {week} of {group.week_count}
@@ -241,6 +263,13 @@ export function GroupHome() {
           transactions={transactions}
           currentMemberId={currentMemberId}
           onDismiss={handleSundayDismiss}
+        />
+      )}
+
+      {showHelp && (
+        <HowToSheet
+          groupName={group.name}
+          onClose={() => setShowHelp(false)}
         />
       )}
 
