@@ -90,7 +90,10 @@ export const useGroupStore = create<GroupState>()((set) => ({
   setReceipts: (receipts) => set({ receipts }),
   setSettlements: (settlements) => set({ settlements }),
   addSettlement: (settlement) =>
-    set((s) => ({ settlements: [...s.settlements, settlement] })),
+    set((s) => {
+      if (s.settlements.find((x) => x.id === settlement.id)) return s
+      return { settlements: [...s.settlements, settlement] }
+    }),
 
   addReceipt: (receipt) =>
     set((s) => {

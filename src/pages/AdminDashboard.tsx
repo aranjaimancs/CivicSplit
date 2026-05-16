@@ -788,15 +788,17 @@ function CreateModal({ onClose, onCreated }: { onClose: () => void; onCreated: (
     setSaving(true)
     try {
       let code = generateJoinCode()
+      let codeFound = false
       for (let i = 0; i < 5; i++) {
         const { data: existing } = await supabase
           .from('groups')
           .select('id')
           .eq('join_code', code)
           .maybeSingle()
-        if (!existing) break
+        if (!existing) { codeFound = true; break }
         code = generateJoinCode()
       }
+      if (!codeFound) throw new Error('Could not generate a unique join code — please try again.')
 
       const { error } = await supabase.from('groups').insert({
         name: name.trim(),
