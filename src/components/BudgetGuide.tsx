@@ -10,9 +10,10 @@ interface Props {
   members: Member[]
   currentMemberId: string
   currentWeek: number
+  stipendAmount: number
 }
 
-export function BudgetGuide({ group, receipts, members, currentMemberId, currentWeek }: Props) {
+export function BudgetGuide({ group, receipts, members, currentMemberId, currentWeek, stipendAmount }: Props) {
   const [period, setPeriod] = useState<Period>('week')
 
   const {
@@ -27,7 +28,7 @@ export function BudgetGuide({ group, receipts, members, currentMemberId, current
     const myOwes = computeBalances(members, receipts)
       .find((b) => b.member.id === currentMemberId)?.owes ?? 0
 
-    const stipend   = group.stipend_amount
+    const stipend   = stipendAmount
     const weeks     = group.week_count          // e.g. 8
     const totalDays = weeks * 7                 // 56
 
@@ -136,7 +137,7 @@ export function BudgetGuide({ group, receipts, members, currentMemberId, current
             {fmt(plan)}
           </p>
           <p className="mt-1 text-[11px] text-slate-400">
-            {fmt(group.stipend_amount)} ÷ {group.week_count} wks
+            {fmt(stipendAmount)} ÷ {group.week_count} wks
           </p>
         </div>
 
@@ -162,7 +163,7 @@ export function BudgetGuide({ group, receipts, members, currentMemberId, current
         <div className="mb-1.5 flex items-center justify-between">
           <p className="text-[11px] font-medium text-slate-500">Stipend used</p>
           <p className="text-[11px] font-bold text-slate-700">
-            {fmt(group.stipend_amount - stipendLeft)} <span className="font-normal text-slate-400">of {fmt(group.stipend_amount)}</span>
+            {fmt(stipendAmount - stipendLeft)} <span className="font-normal text-slate-400">of {fmt(stipendAmount)}</span>
           </p>
         </div>
         <div className="h-2 overflow-hidden rounded-full bg-slate-100">

@@ -165,6 +165,7 @@ function JoinScreen({ onSignOut }: { onSignOut: () => void }) {
   const [displayName, setDisplayName] = useState(
     user?.user_metadata?.full_name?.split(' ')[0] ?? ''
   )
+  const [stipendAmount, setStipendAmount] = useState('')
   const [loading, setLoading] = useState(false)
   const [groupNames, setGroupNames] = useState<Record<string, string>>({})
 
@@ -216,6 +217,7 @@ function JoinScreen({ onSignOut }: { onSignOut: () => void }) {
         return
       }
 
+      const parsedStipend = parseFloat(stipendAmount)
       const { data: member, error: mErr } = await supabase
         .from('members')
         .insert({
@@ -223,6 +225,7 @@ function JoinScreen({ onSignOut }: { onSignOut: () => void }) {
           user_id: user.id,
           display_name: displayName.trim(),
           avatar_color: avatarColor(user.id),
+          stipend_amount: isFinite(parsedStipend) && parsedStipend > 0 ? parsedStipend : null,
         })
         .select()
         .single()
@@ -355,6 +358,23 @@ function JoinScreen({ onSignOut }: { onSignOut: () => void }) {
                 required
                 maxLength={40}
               />
+            </div>
+            <div>
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-400">
+                Your stipend <span className="normal-case font-normal text-slate-300">(optional — add later in Settle Up)</span>
+              </label>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">$</span>
+                <input
+                  className="input-filled py-3.5 pl-7"
+                  placeholder="0.00"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={stipendAmount}
+                  onChange={(e) => setStipendAmount(e.target.value)}
+                />
+              </div>
             </div>
             <button type="submit" disabled={loading} className="btn-primary">
               {loading ? 'Joining…' : 'Join group'}

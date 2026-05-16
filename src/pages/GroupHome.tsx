@@ -177,14 +177,14 @@ export function GroupHome() {
                 </div>
 
                 {/* Right: stipend remaining */}
-                {group.stipend_amount > 0 && (
+                {(myBalance.member.stipend_amount ?? 0) > 0 && (
                   <div className="min-w-0 flex-1 text-right">
                     <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-white/60 sm:text-[11px]">Stipend left</p>
                     <p className="amount mt-1 text-[1.65rem] font-bold tracking-tight text-white leading-none sm:text-[2.25rem]">
-                      {fmt(Math.max(group.stipend_amount - myBalance.owes, 0))}
+                      {fmt(Math.max((myBalance.member.stipend_amount ?? 0) - myBalance.owes, 0))}
                     </p>
                     <p className="mt-1.5 text-[12px] font-medium text-white/60 sm:text-[13px]">
-                      of {fmt(group.stipend_amount)}
+                      of {fmt(myBalance.member.stipend_amount ?? 0)}
                     </p>
                   </div>
                 )}
@@ -208,13 +208,14 @@ export function GroupHome() {
           <BalanceBoard balances={balances} currentMemberId={currentMemberId} />
         </section>
 
-        {group.stipend_amount > 0 && myBalance && (
+        {(myBalance?.member.stipend_amount ?? 0) > 0 && myBalance && (
           <BudgetGuide
             group={group}
             receipts={receipts}
             members={members}
             currentMemberId={currentMemberId}
             currentWeek={week}
+            stipendAmount={myBalance.member.stipend_amount ?? 0}
           />
         )}
 

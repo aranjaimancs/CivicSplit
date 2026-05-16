@@ -22,6 +22,9 @@ export function SettleUp() {
   const [editingVenmo, setEditingVenmo] = useState(false)
   const [venmoHandle, setVenmoHandle] = useState('')
   const [savingVenmo, setSavingVenmo] = useState(false)
+  const [editingStipend, setEditingStipend] = useState(false)
+  const [stipendInput, setStipendInput] = useState('')
+  const [savingStipend, setSavingStipend] = useState(false)
   const currentMember = members.find((m) => m.id === currentMemberId)
 
   async function handleMarkPaid(tx: Transaction) {
@@ -69,6 +72,30 @@ export function SettleUp() {
       toast.error('Failed to save Venmo handle')
     } finally {
       setSavingVenmo(false)
+    }
+  }
+
+  async function saveStipend(e: React.FormEvent) {
+    e.preventDefault()
+    if (!currentMemberId) return
+    const amount = parseFloat(stipendInput)
+    if (!isFinite(amount) || amount < 0) {
+      toast.error('Enter a valid amount')
+      return
+    }
+    setSavingStipend(true)
+    try {
+      const value = amount > 0 ? amount : null
+      await supabase.from('members').update({ stipend_amount: value }).eq('id', currentMemberId)
+      useGroupStore.setState((s) => ({
+        members: s.members.map((m) => (m.id === currentMemberId ? { ...m, stipend_amount: value } : m)),
+      }))
+      toast.success(value ? 'Stipend updated' : 'Stipend removed')
+      setEditingStipend(false)
+    } catch {
+      toast.error('Failed to save stipend')
+    } finally {
+      setSavingStipend(false)
     }
   }
 
@@ -231,6 +258,55 @@ export function SettleUp() {
                 {savingVenmo ? '…' : 'Save'}
               </button>
               <button type="button" onClick={() => setEditingVenmo(false)} className="px-2 text-slate-400 hover:text-slate-600">
+                ×
+              </button>
+            </form>
+          )}
+        </div>
+
+        {/* Stipend */}
+        <div className="card p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-900">My stipend</p>
+              <p className="mt-0.5 text-xs text-slate-500">
+                {currentMember?.stipend_amount
+                  ? `${fmt(currentMember.stipend_amount)} total budget`
+                  : 'Set your personal travel budget'}
+              </p>
+            </div>
+            {!editingStipend && (
+              <button
+                type="button"
+                onClick={() => {
+                  setStipendInput(currentMember?.stipend_amount?.toString() ?? '')
+                  setEditingStipend(true)
+                }}
+                className="shrink-0 rounded-lg bg-primary-50 px-3 py-1.5 text-xs font-bold text-primary-700"
+              >
+                {currentMember?.stipend_amount ? 'Edit' : 'Add'}
+              </button>
+            )}
+          </div>
+          {editingStipend && (
+            <form onSubmit={saveStipend} className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="relative min-w-0 flex-1">
+                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">$</span>
+                <input
+                  className="input-filled min-w-0 w-full pl-6"
+                  placeholder="0.00"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={stipendInput}
+                  onChange={(e) => setStipendInput(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              <button type="submit" disabled={savingStipend} className="rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
+                {savingStipend ? '…' : 'Save'}
+              </button>
+              <button type="button" onClick={() => setEditingStipend(false)} className="px-2 text-slate-400 hover:text-slate-600">
                 ×
               </button>
             </form>
