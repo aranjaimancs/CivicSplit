@@ -38,14 +38,22 @@ export function computeBalances(
       const price = Number(item.price)
 
       if (item.split_type === 'shared') {
-        // Split equally among all members using integer arithmetic to avoid
-        // floating-point accumulation (e.g. $10 ÷ 3 must sum to exactly $10).
         paid[payer] = (paid[payer] ?? 0) + price
-        const base = round2(Math.floor(price * 100 / members.length) / 100)
-        const remainder = round2(price - base * members.length)
-        members.forEach((m, idx) => {
-          owes[m.id] = (owes[m.id] ?? 0) + (idx === 0 ? round2(base + remainder) : base)
-        })
+        const splits: LineItemSplit[] = item.splits ?? []
+        if (splits.length > 0) {
+          // Frozen splits written at save time — new members never get pulled in.
+          for (const split of splits) {
+            owes[split.member_id] = (owes[split.member_id] ?? 0) + Number(split.amount)
+          }
+        } else {
+          // Legacy receipts (created before per-member splits were stored):
+          // fall back to dividing among all current members.
+          const base = round2(Math.floor(price * 100 / members.length) / 100)
+          const remainder = round2(price - base * members.length)
+          members.forEach((m, idx) => {
+            owes[m.id] = (owes[m.id] ?? 0) + (idx === 0 ? round2(base + remainder) : base)
+          })
+        }
       } else if (item.split_type === 'personal') {
         // Payer paid AND owes — nets to zero in group balances
         paid[payer] = (paid[payer] ?? 0) + price

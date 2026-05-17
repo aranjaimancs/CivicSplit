@@ -161,9 +161,10 @@ export function AddReceipt() {
         .select()
       if (liErr) throw liErr
 
-      // For custom splits: divide price equally among assigned members
+      // Always write explicit per-member split rows for every item.
+      // This freezes who owes what at save time so later-joining members are
+      // never pulled into receipts that existed before they arrived.
       const splitInserts = resolvedItems.flatMap((item, idx) => {
-        if (item.split_type !== 'custom') return []
         const li = lineItems[idx]
         if (!li) return []
 
