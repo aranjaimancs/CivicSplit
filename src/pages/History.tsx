@@ -5,7 +5,7 @@ import { useGroupStore } from '../store'
 import { useSessionStore } from '../store'
 import { NavBar } from '../components/NavBar'
 import { ReceiptCard } from '../components/ReceiptCard'
-import { fmt, computeBalances } from '../lib/calculations'
+import { fmt, computeBalances, isOnReceipt } from '../lib/calculations'
 import type { WeekSummary } from '../types'
 
 export function History() {
@@ -22,7 +22,8 @@ export function History() {
       const startDate = addWeeks(groupStart, w)
       const endDate = endOfWeek(startDate, { weekStartsOn: 1 })
       const weekReceipts = receipts.filter((r) =>
-        isWithinInterval(new Date(r.date), { start: startDate, end: endDate })
+        isWithinInterval(new Date(r.date), { start: startDate, end: endDate }) &&
+        isOnReceipt(r, currentMemberId ?? '')
       )
       const totalSpent = weekReceipts.reduce((s, r) => s + Number(r.total), 0)
       const weekBalances = computeBalances(members, weekReceipts)
@@ -31,15 +32,19 @@ export function History() {
     }).reverse()
   }, [group, receipts, members, currentMemberId])
 
-  const totalGroupSpend = receipts.reduce((s, r) => s + Number(r.total), 0)
+  const myReceipts = useMemo(
+    () => receipts.filter((r) => isOnReceipt(r, currentMemberId ?? '')),
+    [receipts, currentMemberId]
+  )
+  const myTotalSpend = myReceipts.reduce((s, r) => s + Number(r.total), 0)
 
   return (
     <div className="min-h-screen bg-app-bg pb-36 animate-fade-in">
       <header className="page-header">
         <h1 className="text-xl font-bold text-slate-900">History</h1>
         <p className="mt-0.5 text-sm text-slate-500">
-          {group?.name} · <span className="amount font-medium text-slate-600">{fmt(totalGroupSpend)}</span> ·{' '}
-          {receipts.length} {receipts.length === 1 ? 'receipt' : 'receipts'}
+          {group?.name} · <span className="amount font-medium text-slate-600">{fmt(myTotalSpend)}</span> ·{' '}
+          {myReceipts.length} {myReceipts.length === 1 ? 'receipt' : 'receipts'}
         </p>
       </header>
 

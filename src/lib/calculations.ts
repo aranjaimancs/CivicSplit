@@ -139,6 +139,24 @@ export function round2(n: number): number {
   return Math.round(n * 100) / 100
 }
 
+/**
+ * Returns true if a member is involved in a receipt —
+ * either as the payer, or assigned to at least one line item.
+ *
+ * Legacy shared items with no stored splits (created before per-member
+ * split rows were introduced) are treated as involving everyone, since
+ * we can't reconstruct the original membership list.
+ */
+export function isOnReceipt(receipt: Receipt, memberId: string): boolean {
+  if (receipt.paid_by === memberId) return true
+  for (const item of receipt.line_items ?? []) {
+    const splits = item.splits ?? []
+    if (splits.length === 0 && item.split_type === 'shared') return true   // legacy
+    if (splits.some((s) => s.member_id === memberId)) return true
+  }
+  return false
+}
+
 /** Generate a Venmo deep link */
 export function venmoLink(handle: string, amount: number, note = 'BudgetSplit'): string {
   const params = new URLSearchParams({

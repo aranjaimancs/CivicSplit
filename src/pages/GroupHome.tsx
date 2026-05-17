@@ -14,7 +14,7 @@ import { SettleUpSunday } from '../components/SettleUpSunday'
 import { SpendingBreakdownSheet } from '../components/SpendingBreakdownSheet'
 import { BudgetGuide } from '../components/BudgetGuide'
 import { HowToSheet } from '../components/HowToSheet'
-import { fmt } from '../lib/calculations'
+import { fmt, isOnReceipt } from '../lib/calculations'
 import { isSunday, hasDismissedThisSunday, dismissThisSunday } from '../lib/sunday'
 import { hasSeenOnboarding, markOnboardingSeen } from '../lib/onboarding'
 
@@ -86,7 +86,8 @@ export function GroupHome() {
   }
 
   const week = currentWeek(group.start_date ?? group.created_at, group.week_count)
-  const recentReceipts = receipts.slice(0, 10)
+  const myReceipts = receipts.filter((r) => isOnReceipt(r, currentMemberId))
+  const recentReceipts = myReceipts.slice(0, 10)
   const totalSpend = receipts.reduce((s, r) => s + Number(r.total), 0)
 
   const showSundayModal =
