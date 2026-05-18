@@ -165,6 +165,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
   const [loading, setLoading] = useState(true)
   const [showCreate, setShowCreate] = useState(false)
   const [statsGroup, setStatsGroup] = useState<AdminGroup | null>(null)
+  const [membersGroup, setMembersGroup] = useState<AdminGroup | null>(null)
   const [spendStats, setSpendStats] = useState<SpendStats | null>(null)
   const [exportLoading, setExportLoading] = useState(false)
 
@@ -430,6 +431,7 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
                 group={group}
                 onDeleted={loadGroups}
                 onViewStats={() => setStatsGroup(group)}
+                onManageMembers={() => setMembersGroup(group)}
               />
             ))}
           </div>
@@ -443,6 +445,180 @@ function AdminPanel({ onLogout }: { onLogout: () => void }) {
       {statsGroup && (
         <GroupStatsModal group={statsGroup} onClose={() => setStatsGroup(null)} />
       )}
+
+      {membersGroup && (
+        <MembersModal
+          group={membersGroup}
+          onClose={() => setMembersGroup(null)}
+          onChanged={loadGroups}
+        />
+      )}
+    </div>
+  )
+}
+
+// ─── Members modal ─────────────────────────────────────────────────────────────
+
+interface AdminMember {
+  id: string
+  display_name: string
+  avatar_color: string
+  created_at: string
+}
+
+function MembersModal({
+  group,
+  onClose,
+  onChanged,
+}: {
+  group: AdminGroup
+  onClose: () => void
+  onChanged: () => void
+}) {
+  const [members, setMembers] = useState<AdminMember[]>([])
+  const [loading, setLoading] = useState(true)
+  const [confirmId, setConfirmId] = useState<string | null>(null)
+  const [removing, setRemoving] = useState(false)
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('members')
+        .select('id, display_name, avatar_color, created_at')
+        .eq('group_id', group.id)
+        .order('created_at', { ascending: true })
+      if (error) {
+        toast.error('Failed to load members')
+      } else {
+        setMembers((data ?? []) as AdminMember[])
+      }
+      setLoading(false)
+    }
+    load()
+  }, [group.id])
+
+  async function handleRemove(memberId: string) {
+    setRemoving(true)
+    try {
+      // 1. Delete line_item_splits for this member
+      const { error: splitsErr } = await supabase
+        .from('line_item_splits')
+        .delete()
+        .eq('member_id', memberId)
+      if (splitsErr) throw splitsErr
+
+      // 2. Delete settlements involving this member
+      const { error: sErr1 } = await supabase
+        .from('settlements')
+        .delete()
+        .eq('from_member', memberId)
+      if (sErr1) throw sErr1
+      const { error: sErr2 } = await supabase
+        .from('settlements')
+        .delete()
+        .eq('to_member', memberId)
+      if (sErr2) throw sErr2
+
+      // 3. Delete the member row
+      const { error: mErr } = await supabase
+        .from('members')
+        .delete()
+        .eq('id', memberId)
+      if (mErr) throw mErr
+
+      setMembers((prev) => prev.filter((m) => m.id !== memberId))
+      setConfirmId(null)
+      onChanged()
+      toast.success('Member removed')
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to remove member')
+    } finally {
+      setRemoving(false)
+    }
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 backdrop-blur-sm animate-fade-in sm:items-center sm:p-6"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <div className="w-full max-w-sm rounded-t-3xl bg-white p-6 shadow-2xl animate-slide-up sm:rounded-3xl">
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900">Members</h2>
+            <p className="text-xs text-slate-400">{group.name}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 text-lg"
+          >
+            ×
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="space-y-2.5">
+            {[...Array(4)].map((_, i) => <div key={i} className="skeleton h-14 rounded-2xl" />)}
+          </div>
+        ) : members.length === 0 ? (
+          <p className="py-8 text-center text-sm text-slate-400">No members yet</p>
+        ) : (
+          <div className="space-y-2">
+            {members.map((m) => (
+              <div key={m.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                    style={{ backgroundColor: m.avatar_color }}
+                  >
+                    {m.display_name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="flex-1 truncate text-sm font-semibold text-slate-800">
+                    {m.display_name}
+                  </span>
+                  {confirmId !== m.id && (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmId(m.id)}
+                      className="shrink-0 rounded-lg border border-rose-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-700"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+
+                {confirmId === m.id && (
+                  <div className="mt-2.5 rounded-xl border border-rose-200 bg-rose-50 p-2.5">
+                    <p className="text-xs font-semibold text-rose-800">
+                      Remove <span className="font-bold">{m.display_name}</span>? This deletes their splits and settlements.
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleRemove(m.id)}
+                        disabled={removing}
+                        className="flex-1 rounded-lg bg-rose-600 py-1.5 text-xs font-bold text-white transition-colors hover:bg-rose-700 disabled:opacity-60"
+                      >
+                        {removing ? 'Removing…' : 'Yes, remove'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmId(null)}
+                        disabled={removing}
+                        className="flex-1 rounded-lg border border-rose-200 bg-white py-1.5 text-xs font-semibold text-rose-700 transition-colors hover:bg-rose-50"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -453,10 +629,12 @@ function GroupRow({
   group,
   onDeleted,
   onViewStats,
+  onManageMembers,
 }: {
   group: AdminGroup
   onDeleted: () => void
   onViewStats: () => void
+  onManageMembers: () => void
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -566,6 +744,14 @@ function GroupRow({
           title="View spending summary"
         >
           <ChartIcon className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onManageMembers}
+          className="flex h-[38px] w-[38px] items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-800 active:scale-[0.95]"
+          title="Manage members"
+        >
+          <PeopleIcon className="h-4 w-4" />
         </button>
         <button
           type="button"
@@ -1010,6 +1196,18 @@ function DownloadIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+    </svg>
+  )
+}
+
+function PeopleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
+      />
     </svg>
   )
 }
