@@ -81,22 +81,32 @@ export function AddReceipt() {
       setScansUsed(used)
       if (result.storeName) setStoreName(result.storeName)
       if (result.date) setDate(result.date)
-      setItems(
-        result.items.map((item) => ({
+      const scannedItems = result.items.map((item) => ({
+        id: crypto.randomUUID(),
+        name: item.name,
+        price: item.price,
+        // personal → assign to payer only; shared → everyone
+        assigned_member_ids:
+          item.split_type === 'personal' && paidBy
+            ? [paidBy]
+            : [...allMemberIds],
+        aiReason: item.aiReason,
+        aiSuggestedAll: item.split_type !== 'personal',
+      }))
+      // Append tax as a shared line item if the receipt has one
+      if (result.tax && parseFloat(result.tax) > 0) {
+        scannedItems.push({
           id: crypto.randomUUID(),
-          name: item.name,
-          price: item.price,
-          // personal → assign to payer only; shared → everyone
-          assigned_member_ids:
-            item.split_type === 'personal' && paidBy
-              ? [paidBy]
-              : [...allMemberIds],
-          aiReason: item.aiReason,
-          aiSuggestedAll: item.split_type !== 'personal',
-        }))
-      )
+          name: 'Tax',
+          price: result.tax,
+          assigned_member_ids: [...allMemberIds],
+          aiReason: 'tax line from receipt',
+          aiSuggestedAll: true,
+        })
+      }
+      setItems(scannedItems)
       setAiScanned(true)
-      toast.success(`Found ${result.items.length} items`)
+      toast.success(`Found ${result.items.length} item${result.items.length === 1 ? '' : 's'}${result.tax ? ' + tax' : ''}`)
     } catch (e) {
       // AI rejected the image (not a receipt, unreadable, etc.) — does NOT count as a scan
       setScanError({
@@ -205,6 +215,9 @@ export function AddReceipt() {
             <div>
               <p className="text-lg font-bold text-slate-900">Reading your receipt</p>
               <p className="mt-1 text-sm text-slate-500">Identifying line items…</p>
+            </div>
+            <div className="rounded-xl bg-amber-50 border border-amber-200/80 px-3 py-2.5 text-xs text-amber-800 text-left">
+              <span className="font-semibold">Heads up:</span> AI can make minor errors. Double-check each item and amount before saving.
             </div>
             <div className="dot-pulse flex justify-center gap-1.5">
               <span className="inline-block h-2.5 w-2.5 rounded-full bg-primary-400" />

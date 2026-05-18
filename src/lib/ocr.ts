@@ -81,6 +81,7 @@ export interface ScanResult {
   storeName: string
   date: string | null  // YYYY-MM-DD or null if not found
   items: ScannedItem[]
+  tax: string | null   // tax amount as a string (e.g. "1.23") or null if none
 }
 
 /**
@@ -101,8 +102,9 @@ If the image is too blurry, too dark, severely cropped, not a receipt, or otherw
 {"error": "brief description of the problem"}
 
 Otherwise:
-1. Extract every individual line item (skip tax, discounts, subtotals, and the grand total)
-2. Classify each item:
+1. Extract every individual line item (skip discounts, subtotals, and the grand total)
+2. If there is a tax line (sales tax, GST, HST, etc.), capture the total tax amount separately — do NOT include it in the items array
+3. Classify each item:
    - "shared" → anything the whole household uses: cleaning supplies, paper products, shared food (bread, eggs, milk, butter, condiments, cooking oil, snacks for everyone, beverages, coffee/tea)
    - "personal" → clearly for one person only: personal hygiene products, medicine, single-serving specialty items, specific dietary supplements, deodorant, shampoo, razor blades
 
@@ -113,6 +115,7 @@ Return ONLY valid JSON (no markdown, no code fences):
 {
   "store_name": "string or empty",
   "date": "YYYY-MM-DD or null",
+  "tax": 1.23,
   "items": [
     {
       "name": "clean short item name",
@@ -121,7 +124,9 @@ Return ONLY valid JSON (no markdown, no code fences):
       "reason": "2-4 word reason"
     }
   ]
-}`
+}
+
+If there is no tax on the receipt, set "tax" to null.`
 
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -169,6 +174,7 @@ Return ONLY valid JSON (no markdown, no code fences):
     error?: string
     store_name?: string
     date?: string | null
+    tax?: number | null
     items: { name: string; price: number; split_type: string; reason: string }[]
   }
 
@@ -185,6 +191,7 @@ Return ONLY valid JSON (no markdown, no code fences):
   return {
     storeName: parsed.store_name ?? '',
     date: parsed.date ?? null,
+    tax: parsed.tax != null ? Number(parsed.tax).toFixed(2) : null,
     items: (parsed.items ?? []).map((item) => ({
       name: item.name,
       price: Number(item.price).toFixed(2),
